@@ -1,14 +1,7 @@
 import express from "express";
 import http from "http";
-import { WebSocket, WebSocketServer } from "ws";
-import {
-  AuthMessage,
-  AuthMessageSchema,
-  MessageSchema,
-  WsMessage,
-} from "./Schemas";
-import { ZodError } from "zod";
-import { AuthedSocket, WebSocketManager } from "./WebSocketManager";
+import { WebSocketServer } from "ws";
+import { WebSocketManager } from "./WebSocketManager";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -51,32 +44,6 @@ app.get("/broadcast", (req, res) => {
   } catch (error) {
     res.json({ Error: "Internal Serer Error" });
   }
-});
-
-export const handleError = (
-  type: "onMessage" | "onceMessage",
-  socket: WebSocket,
-  error: any
-) => {
-  switch (type) {
-    case "onMessage":
-      if (error instanceof ZodError) {
-        socket.send("Invalid payload!");
-        return;
-      }
-      socket.send("JSON payload expected");
-      break;
-    case "onceMessage":
-      socket.send("Authentication Failed!");
-      break;
-    default:
-      socket.send("Internal server Error!");
-      break;
-  }
-};
-
-wss.on("error", (error) => {
-  console.error(error);
 });
 
 server.listen(PORT, () => {

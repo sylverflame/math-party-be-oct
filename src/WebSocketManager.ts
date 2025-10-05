@@ -5,7 +5,7 @@ import {
   MessageSchema,
   WsMessage,
 } from "./Schemas";
-import { handleError } from ".";
+import { ZodError } from "zod";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -14,49 +14,61 @@ export interface AuthedSocket extends WebSocket {
 }
 
 export class WebSocketManager {
-  private connections: Map<string, WebSocket>;
+  private connections = new Map<string, WebSocket>();
   private server: WebSocketServer;
 
   /**
    *
    */
   constructor(server: WebSocketServer) {
-    this.connections = new Map();
     this.server = server;
-    this.server.on("connection", (socket: AuthedSocket) => {
-      socket.id = crypto.randomUUID();
-      socket.isAuthenticated = false;
-      socket.send(
-        JSON.stringify({ type: "Message", Message: "Authenticate Yourself" })
-      );
-      socket.once("message", (data: AuthMessage) =>
-        this.handleAuthentication(socket, data)
-      );
-
-      socket.on("error", (error) => {
-        console.error(error);
-      });
-
-      socket.on("close", () => {
-        const userId = socket.userId;
-        if (!userId) {
-          return;
-        }
-        this.removeSocket(userId);
-      });
-    });
+    this.initializeServer();
   }
 
-  addWebsocket = (id: string, socket: WebSocket) => {
+  initializeServer = () => {
+    this.server.on("connection", (socket: AuthedSocket) =>
+      this.initializeSocket(socket)
+    );
+
+    this.server.on("error", (error) => {
+      console.error("WebSocket Server Error:", error);
+    });
+  };
+
+  initializeSocket = (socket: AuthedSocket) => {
+    socket.id = crypto.randomUUID();
+    socket.isAuthenticated = false;
+    socket.send(
+      JSON.stringify({ type: "Message", Message: "Authenticate Yourself" })
+    );
+    socket.once("message", (data: AuthMessage) =>
+      this.handleAuthentication(socket, data)
+    );
+
+    socket.on("error", (error) => {
+      console.error(error);
+    });
+
+    socket.on("close", () => {
+      this.cleanUpSocket(socket);
+    });
+  };
+
+  private addWebsocket = (id: string, socket: WebSocket) => {
     this.connections.set(id, socket);
   };
   getWebsocket = (id: string): WebSocket | undefined => {
     return this.connections.get(id);
   };
-  removeSocket = (id: string): void => {
+  private removeSocket = (id: string): void => {
     this.connections.delete(id);
   };
 
+  private cleanUpSocket = (socket: AuthedSocket) => {
+    if (socket.userId) {
+      this.removeSocket(socket.userId);
+    }
+  };
   listWebSockets = (): string[] => {
     return [...this.connections.keys()];
   };
@@ -87,7 +99,7 @@ export class WebSocketManager {
         MessageSchema.parse(parsed);
         socket.send("Message received!");
       } catch (error) {
-        handleError("onMessage", socket, error);
+        this.handleError("onMessage", socket, error);
       }
     });
   };
@@ -108,11 +120,33 @@ export class WebSocketManager {
         `Authentication Successful - Welcome to the server ${userId}`
       );
 
-      // Attach the on message event listener once user is validated
+      // Attach the onMessage event listener once user is validated
       this.attachMessageHandler(socket);
     } catch (error) {
-      handleError("onceMessage", socket, error);
+      this.handleError("onceMessage", socket, error);
       socket.close();
+    }
+  };
+
+  private handleError = (
+    type: "onMessage" | "onceMessage",
+    socket: WebSocket,
+    error: any
+  ) => {
+    switch (type) {
+      case "onMessage":
+        if (error instanceof ZodError) {
+          socket.send("Invalid payload!");
+          return;
+        }
+        socket.send("JSON payload expected");
+        break;
+      case "onceMessage":
+        socket.send("Authentication Failed!");
+        break;
+      default:
+        socket.send("Internal server Error!");
+        break;
     }
   };
 }
