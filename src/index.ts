@@ -8,7 +8,7 @@ import {
   WsMessage,
 } from "./Schemas";
 import { ZodError } from "zod";
-import { WebSocketManager } from "./WebSocketManager";
+import { AuthedSocket, WebSocketManager } from "./WebSocketManager";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -31,24 +31,29 @@ app.get("/socket/:socketId", (req, res) => {
 
 app.get("/socket", (req, res) => {
   try {
-    const connectedSocketList = socketManager.listWebSockets();
-    res.json({ clients: connectedSocketList.length, connectedSocketList });
+    const totalClients = socketManager.totalClients();
+    const authenticatedList = socketManager.listWebSockets();
+    res.json({
+      totalClients,
+      authenticated: authenticatedList.length,
+      authenticatedList,
+    });
   } catch (error) {
     res.json({ Error: "Internal Serer Error" });
   }
 });
 
 app.get("/broadcast", (req, res) => {
+  const { authOnly } = req.query;
   try {
-    const connectedSocketList = socketManager.listWebSockets();
-    res.json({ clients: connectedSocketList.length, connectedSocketList });
+    socketManager.broadcastMessage(authOnly === "true");
+    res.json({ Message: "Success!" });
   } catch (error) {
     res.json({ Error: "Internal Serer Error" });
   }
 });
 
-
-const handleError = (
+export const handleError = (
   type: "onMessage" | "onceMessage",
   socket: WebSocket,
   error: any
@@ -69,70 +74,6 @@ const handleError = (
       break;
   }
 };
-
-interface AuthedSocket extends WebSocket {
-  id: string;
-  userId?: string;
-  isAuthenticated: boolean;
-}
-
-const attachMessageHandler = (socket: AuthedSocket) => {
-  socket.on("message", (data: WsMessage) => {
-    if (!socket.isAuthenticated) {
-      return;
-    }
-    try {
-      const parsed = JSON.parse(data.toString());
-      MessageSchema.parse(parsed);
-      socket.send("Message received!");
-    } catch (error) {
-      handleError("onMessage", socket, error);
-    }
-  });
-};
-
-wss.on("connection", (socket: AuthedSocket) => {
-  socket.id = crypto.randomUUID();
-  socket.isAuthenticated = false;
-  socket.send(
-    JSON.stringify({ type: "Message", Message: "Authenticate Yourself" })
-  );
-  socket.once("message", (data: AuthMessage) => {
-    try {
-      const parsed = JSON.parse(data.toString());
-      const validatedMessage = AuthMessageSchema.parse(parsed);
-      const { userId, token } = validatedMessage.payload;
-      // TODO: Validate token here
-
-      // --
-      // Once validated
-      socket.isAuthenticated = true;
-      socket.userId = userId;
-      socketManager.addWebsocket(userId, socket);
-      socket.send(
-        `Authentication Successful - Welcome to the server ${userId}`
-      );
-
-      // Attach the on message event listener once user is validated
-      attachMessageHandler(socket)
-    } catch (error) {
-      handleError("onceMessage", socket, error);
-      socket.close();
-    }
-  });
-
-  socket.on("error", (error) => {
-    console.error(error);
-  });
-
-  socket.on("close", () => {
-    const userId = socket.userId;
-    if (!userId) {
-      return;
-    }
-    socketManager.removeSocket(userId);
-  });
-});
 
 wss.on("error", (error) => {
   console.error(error);
