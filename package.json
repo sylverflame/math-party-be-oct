@@ -2,15 +2,21 @@
   "name": "math-parthy-be-sockets-new",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc -b",
     "start": "node dist/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "@types/ws": "^8.18.1",
+    "express": "^5.1.0",
+    "ws": "^8.18.3",
+    "zod": "^4.1.11"
+  }
 }
