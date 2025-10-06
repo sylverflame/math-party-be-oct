@@ -2,7 +2,7 @@ import z, { infer } from "zod";
 
 export const MessageSchema = z.object({
     type: z.string(),
-    payload: z.string()
+    payload: z.any()
 })
 
 export const AuthMessageSchema = z.object({

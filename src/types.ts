@@ -1,11 +1,13 @@
 export type UserID = string;
-type Operator = "Add" | "Subtract" | "Multiply" | "Divide";
-type DifficultyLevel = "Easy" | "Medium" | "Hard" | "Crazy";
+export const operators = ["Add", "Subtract", "Multiply", "Divide"] as const;
+export type Operator = (typeof operators)[number];
+const difficultyLevels = ["Easy", "Medium", "Hard", "Crazy"] as const;
+export type DifficultyLevel = (typeof difficultyLevels)[number];
 
 // Game Entity types
 export type GameRound = {
-  first: number;
-  second: number;
+  firstNumber: number;
+  secondNumber: number;
   operator: Operator;
   solution?: number;
 };
@@ -35,4 +37,5 @@ export type PlayerScore = {
   score: number;
 };
 
-export type PlayerRole = "Host" | "Player";
+const playerRoles = ["Host", "Player"] as const;
+export type PlayerRole = (typeof playerRoles)[number];
