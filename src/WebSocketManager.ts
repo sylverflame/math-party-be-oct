@@ -6,15 +6,16 @@ import {
   WsMessage,
 } from "./Schemas";
 import { ZodError } from "zod";
+import { UserID } from "./types";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
-  userId?: string;
+  userId?: UserID;
   isAuthenticated: boolean;
 }
 
 export class WebSocketManager {
-  private connections = new Map<string, WebSocket>();
+  private connections = new Map<UserID, WebSocket>();
   private server: WebSocketServer;
 
   /**
