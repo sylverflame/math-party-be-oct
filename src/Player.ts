@@ -20,4 +20,8 @@ export class Player {
     this.scores.push({ round, score });
     this.totalScore += score;
   };
+
+  getUserId = () => {
+    return this.userId
+  }
 }

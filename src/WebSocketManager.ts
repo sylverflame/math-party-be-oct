@@ -1,9 +1,8 @@
 import { WebSocket, WebSocketServer } from "ws";
-import { AuthMessage, AuthMessageSchema, MessageSchema, RoomCode, WsMessage } from "./Schemas";
 import { ZodError } from "zod";
-import { UserID } from "./types";
 import { GameManager } from "./GameManager";
-import { Game } from "./Game";
+import { AuthMessage, AuthMessageSchema, MessageSchema, RoomCode, WsMessage } from "./Schemas";
+import { UserID } from "./types";
 import { sendMessage } from "./utils";
 
 export interface AuthedSocket extends WebSocket {
@@ -94,7 +93,7 @@ export class WebSocketManager {
       try {
         const parsedMessage = JSON.parse(data.toString());
         MessageSchema.parse(parsedMessage);
-        sendMessage("Message", { message: "Message received!" }, socket);
+        // sendMessage("Message", { message: "Message received!" }, socket);
         this.gameManager.handleMessage(socket, parsedMessage);
       } catch (error) {
         this.handleError("onMessage", socket, error);

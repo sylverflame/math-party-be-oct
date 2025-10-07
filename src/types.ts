@@ -3,6 +3,8 @@ import { DifficultyLevel } from "./Schemas";
 export type UserID = string;
 export const operators = ["Add", "Subtract", "Multiply", "Divide"] as const;
 export type Operator = (typeof operators)[number];
+export const sendMessageTypes = ["Message", "Error", "Success", "Notification"] as const;
+export type SendMessageType = (typeof sendMessageTypes)[number];
 
 // Game Entity types
 export type GameRound = {

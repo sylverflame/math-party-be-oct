@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 8080;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const gameManager = new GameManager();
-const socketManager = new WebSocketManager(wss, gameManager);
+export const socketManager = new WebSocketManager(wss, gameManager);
 
 app.get("/socket/:socketId", (req, res) => {
   const { socketId } = req.params;

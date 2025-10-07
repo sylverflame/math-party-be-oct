@@ -8,7 +8,8 @@ export class Game {
   private settings: GameSettings;
   private isMultiplayer: boolean = false;
   private host: UserID;
-  private players: Map<UserID, Player> = new Map();
+//   private players: Map<UserID, Player> = new Map();
+  private players: Player[] = [];
   private rounds: GameRound[] = [];
   /**
    *
@@ -26,17 +27,19 @@ export class Game {
   private initializeGame = (hostId: UserID, gameSettings: GameSettings) => {
     const { totalRounds, difficulty, isMultiplayer } = gameSettings;
     const hostPlayer = new Player(hostId, "Host");
-    this.players.set(hostId, hostPlayer);
+    this.players.push(hostPlayer);
     this.rounds = this.createRounds(totalRounds, difficulty);
   };
 
   joinGame = (userId: UserID) => {
     const player = new Player(userId, "Player");
-    this.players.set(userId, player);
+    this.players.push(player);
   };
 
   getPlayers = (): UserID[] => {
-    return [...this.players.keys()];
+    return this.players.map((player) => {
+        return player.getUserId()
+    })
   };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {

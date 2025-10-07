@@ -30,8 +30,14 @@ export const CreateGameMessageSchema = z.object({
     settings: GameSettingsSchema,
   }),
 });
-export const JoinGameMessageSchema = z.object({
+export const JoinRoomMessageSchema = z.object({
   type: z.literal("JOIN_ROOM"),
+  payload: z.object({
+    roomCode: RoomCodeSchema,
+  }),
+});
+export const LeaveRoomMessageSchema = z.object({
+  type: z.literal("LEAVE_ROOM"),
   payload: z.object({
     roomCode: RoomCodeSchema,
   }),

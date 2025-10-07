@@ -1,7 +1,7 @@
 import { MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
-import { CreateGameMessageSchema, JoinGameMessageSchema, RoomCode, WsMessage } from "./Schemas";
-import { sendMessage } from "./utils";
+import { CreateGameMessageSchema, JoinRoomMessageSchema, LeaveRoomMessageSchema, RoomCode, WsMessage } from "./Schemas";
+import { broadcastMessageToRoom, sendMessage } from "./utils";
 import { AuthedSocket } from "./WebSocketManager";
 
 export class GameManager {
@@ -23,18 +23,17 @@ export class GameManager {
       // Add roomcode to socket connection
       socket.isHostingGame = roomCode;
       this.addGame(roomCode, game);
-      sendMessage("Success", { message: "Game Created" }, socket);
+      sendMessage("Success", { message: `Game Created - Room Code - ${roomCode}` }, socket);
     }
 
     if (message.type === "JOIN_ROOM") {
       const { userId } = socket;
-      const parsed = JoinGameMessageSchema.parse(message);
+      const parsed = JoinRoomMessageSchema.parse(message);
       const { roomCode } = parsed.payload;
       const game = this.games.get(roomCode);
       if (!game) {
         throw new Error("Game does not exist");
       }
-
       if (!userId) {
         throw new Error("Invalid user");
       }
@@ -42,6 +41,27 @@ export class GameManager {
         throw new Error("User is already in the game");
       }
       game.joinGame(userId);
+      sendMessage("Success", { message: `Game Joined - Room Code - ${roomCode}` }, socket);
+      broadcastMessageToRoom("Notification", { message: `Player joined - ${socket.userId}` }, game.getPlayers());
+    }
+
+    if (message.type === "LEAVE_ROOM") {
+      const { userId } = socket;
+      const parsed = LeaveRoomMessageSchema.parse(message);
+      const { roomCode } = parsed.payload;
+      const game = this.games.get(roomCode);
+      if (!game) {
+        throw new Error("Game does not exist");
+      }
+      if (!userId) {
+        throw new Error("Invalid user");
+      }
+      if (game.getPlayers().includes(userId)) {
+        throw new Error("User is already in the game");
+      }
+      game.joinGame(userId);
+      sendMessage("Success", { message: `Game Joined - Room Code - ${roomCode}` }, socket);
+      broadcastMessageToRoom("Notification", { message: `Player joined - ${socket.userId}` }, game.getPlayers());
     }
   };
 
