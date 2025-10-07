@@ -1,6 +1,7 @@
 import { MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
 import { CreateGameMessageSchema, JoinGameMessageSchema, RoomCode, WsMessage } from "./Schemas";
+import { sendMessage } from "./utils";
 import { AuthedSocket } from "./WebSocketManager";
 
 export class GameManager {
@@ -22,7 +23,7 @@ export class GameManager {
       // Add roomcode to socket connection
       socket.isHostingGame = roomCode;
       this.addGame(roomCode, game);
-      socket.send("Success: Game Created");
+      sendMessage("Success", { message: "Game Created" }, socket);
     }
 
     if (message.type === "JOIN_ROOM") {
@@ -31,14 +32,14 @@ export class GameManager {
       const { roomCode } = parsed.payload;
       const game = this.games.get(roomCode);
       if (!game) {
-        throw new Error("Error: Game does not exist");
+        throw new Error("Game does not exist");
       }
 
       if (!userId) {
-        throw new Error("Error: Invalid user");
+        throw new Error("Invalid user");
       }
       if (game.getPlayers().includes(userId)) {
-        throw new Error("Error: User is already in the game");
+        throw new Error("User is already in the game");
       }
       game.joinGame(userId);
     }

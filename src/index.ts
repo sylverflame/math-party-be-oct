@@ -3,6 +3,7 @@ import http from "http";
 import { WebSocketServer } from "ws";
 import { WebSocketManager } from "./WebSocketManager";
 import { GameManager } from "./GameManager";
+import { sendMessage } from "./utils";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -17,7 +18,7 @@ app.get("/socket/:socketId", (req, res) => {
   const { message } = req.query;
   try {
     const socket = socketManager.getWebsocket(socketId);
-    socket!.send(`Message from get request - ${message ?? "Hello"}`);
+    sendMessage("Message", {message: `Message from get request - ${message ?? "Hello"}`}, socket!)
     res.json({ Message: `Message sent to ${socketId}` });
   } catch (error) {
     res.json({ Error: "Socket does not exist" });

@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { UserID } from "./types";
 import { GameManager } from "./GameManager";
 import { Game } from "./Game";
+import { sendMessage } from "./utils";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -38,7 +39,7 @@ export class WebSocketManager {
   initializeSocket = (socket: AuthedSocket) => {
     socket.id = crypto.randomUUID();
     socket.isAuthenticated = false;
-    socket.send(JSON.stringify({ type: "Message", Message: "Authenticate Yourself" }));
+    sendMessage("Message", { message: "Authenticate Yourself" }, socket);
     socket.once("message", (data: AuthMessage) => this.handleAuthentication(socket, data));
 
     socket.on("error", (error) => {
@@ -76,11 +77,11 @@ export class WebSocketManager {
   broadcastMessage = (authenticatedOnly: boolean = false) => {
     if (authenticatedOnly) {
       [...this.connections.values()].forEach((socket) => {
-        socket.send("Hello authenticated sir!");
+        sendMessage("Message", { message: "Hello authenticated sir!" }, socket);
       });
     } else {
       this.server.clients.forEach((socket) => {
-        socket.send("Hello sir!");
+        sendMessage("Message", { message: "Hello sir!" }, socket);
       });
     }
   };
@@ -88,12 +89,12 @@ export class WebSocketManager {
   private attachMessageHandler = (socket: AuthedSocket) => {
     socket.on("message", (data: WsMessage) => {
       if (!socket.isAuthenticated) {
-        throw new Error("Error: Unauthenticated Socket")
+        throw new Error("Unauthenticated Socket");
       }
       try {
         const parsedMessage = JSON.parse(data.toString());
         MessageSchema.parse(parsedMessage);
-        socket.send("Message received!");
+        sendMessage("Message", { message: "Message received!" }, socket);
         this.gameManager.handleMessage(socket, parsedMessage);
       } catch (error) {
         this.handleError("onMessage", socket, error);
@@ -116,7 +117,7 @@ export class WebSocketManager {
       socket.isAuthenticated = true;
       socket.userId = userId;
       this.addWebsocket(userId, socket);
-      socket.send(`Authentication Successful - Welcome to the server ${userId}`);
+      sendMessage("Success", { message: `Authentication Successful - Welcome to the server ${userId}` }, socket);
 
       // Attach the onMessage event listener once user is validated
       this.attachMessageHandler(socket);
@@ -132,16 +133,16 @@ export class WebSocketManager {
       case "onMessage":
         if (error instanceof ZodError) {
           const errorMessage = JSON.stringify(error.issues);
-          socket.send("Invalid payload! - " + errorMessage);
+          sendMessage("Error", { message: "Invalid payload! - " + errorMessage }, socket);
           return;
         }
-        socket.send(JSON.stringify({ type: "Error", message }));
+        sendMessage("Error", { message }, socket);
         break;
       case "onceMessage":
-        socket.send(JSON.stringify({ type: "Error", message: "Authentication failed" }));
+        sendMessage("Error", { message: "Authentication failed" }, socket);
         break;
       default:
-        socket.send(JSON.stringify({ type: "Error", message: "Internal server Error! - " + message }));
+        sendMessage("Error", { message: "Internal server Error! - " + message }, socket);
         break;
     }
   };
