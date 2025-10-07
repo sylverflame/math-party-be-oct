@@ -2,13 +2,15 @@ import express from "express";
 import http from "http";
 import { WebSocketServer } from "ws";
 import { WebSocketManager } from "./WebSocketManager";
+import { GameManager } from "./GameManager";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
-const socketManager = new WebSocketManager(wss);
+const gameManager = new GameManager();
+const socketManager = new WebSocketManager(wss, gameManager);
 
 app.get("/socket/:socketId", (req, res) => {
   const { socketId } = req.params;
@@ -41,6 +43,25 @@ app.get("/broadcast", (req, res) => {
   try {
     socketManager.broadcastMessage(authOnly === "true");
     res.json({ Message: "Success!" });
+  } catch (error) {
+    res.json({ Error: "Internal Serer Error" });
+  }
+});
+
+app.get("/game", (req, res) => {
+  try {
+    const games = gameManager.getRoomCodes();
+    res.json(games);
+  } catch (error) {
+    res.json({ Error: "Internal Serer Error" });
+  }
+});
+
+app.get("/game/:roomCode", (req, res) => {
+  const { roomCode } = req.params;
+  try {
+    const game = gameManager.getGameState(roomCode);
+    res.json(game);
   } catch (error) {
     res.json({ Error: "Internal Serer Error" });
   }

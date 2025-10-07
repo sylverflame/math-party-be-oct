@@ -1,35 +1,34 @@
 import { WebSocket, WebSocketServer } from "ws";
-import {
-  AuthMessage,
-  AuthMessageSchema,
-  MessageSchema,
-  WsMessage,
-} from "./Schemas";
+import { AuthMessage, AuthMessageSchema, MessageSchema, RoomCode, WsMessage } from "./Schemas";
 import { ZodError } from "zod";
 import { UserID } from "./types";
+import { GameManager } from "./GameManager";
+import { Game } from "./Game";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
   userId?: UserID;
   isAuthenticated: boolean;
+  isHostingGame?: RoomCode;
+  isPlayingGame?: RoomCode;
 }
 
 export class WebSocketManager {
   private connections = new Map<UserID, WebSocket>();
   private server: WebSocketServer;
+  private gameManager: GameManager;
 
   /**
    *
    */
-  constructor(server: WebSocketServer) {
+  constructor(server: WebSocketServer, gameManager: GameManager) {
     this.server = server;
+    this.gameManager = gameManager;
     this.initializeServer();
   }
 
   initializeServer = () => {
-    this.server.on("connection", (socket: AuthedSocket) =>
-      this.initializeSocket(socket)
-    );
+    this.server.on("connection", (socket: AuthedSocket) => this.initializeSocket(socket));
 
     this.server.on("error", (error) => {
       console.error("WebSocket Server Error:", error);
@@ -39,12 +38,8 @@ export class WebSocketManager {
   initializeSocket = (socket: AuthedSocket) => {
     socket.id = crypto.randomUUID();
     socket.isAuthenticated = false;
-    socket.send(
-      JSON.stringify({ type: "Message", Message: "Authenticate Yourself" })
-    );
-    socket.once("message", (data: AuthMessage) =>
-      this.handleAuthentication(socket, data)
-    );
+    socket.send(JSON.stringify({ type: "Message", Message: "Authenticate Yourself" }));
+    socket.once("message", (data: AuthMessage) => this.handleAuthentication(socket, data));
 
     socket.on("error", (error) => {
       console.error(error);
@@ -93,12 +88,13 @@ export class WebSocketManager {
   private attachMessageHandler = (socket: AuthedSocket) => {
     socket.on("message", (data: WsMessage) => {
       if (!socket.isAuthenticated) {
-        return;
+        throw new Error("Error: Unauthenticated Socket")
       }
       try {
-        const parsed = JSON.parse(data.toString());
-        MessageSchema.parse(parsed);
+        const parsedMessage = JSON.parse(data.toString());
+        MessageSchema.parse(parsedMessage);
         socket.send("Message received!");
+        this.gameManager.handleMessage(socket, parsedMessage);
       } catch (error) {
         this.handleError("onMessage", socket, error);
       }
@@ -110,6 +106,9 @@ export class WebSocketManager {
       const parsed = JSON.parse(data.toString());
       const validatedMessage = AuthMessageSchema.parse(parsed);
       const { userId, token } = validatedMessage.payload;
+      if ([...this.connections.keys()].includes(userId)) {
+        throw new Error("User already exists");
+      }
       // TODO: Validate token here
 
       // --
@@ -117,9 +116,7 @@ export class WebSocketManager {
       socket.isAuthenticated = true;
       socket.userId = userId;
       this.addWebsocket(userId, socket);
-      socket.send(
-        `Authentication Successful - Welcome to the server ${userId}`
-      );
+      socket.send(`Authentication Successful - Welcome to the server ${userId}`);
 
       // Attach the onMessage event listener once user is validated
       this.attachMessageHandler(socket);
@@ -129,24 +126,22 @@ export class WebSocketManager {
     }
   };
 
-  private handleError = (
-    type: "onMessage" | "onceMessage",
-    socket: WebSocket,
-    error: any
-  ) => {
+  private handleError = (type: "onMessage" | "onceMessage", socket: WebSocket, error: any) => {
+    const message = error.message;
     switch (type) {
       case "onMessage":
         if (error instanceof ZodError) {
-          socket.send("Invalid payload!");
+          const errorMessage = JSON.stringify(error.issues);
+          socket.send("Invalid payload! - " + errorMessage);
           return;
         }
-        socket.send("JSON payload expected");
+        socket.send(JSON.stringify({ type: "Error", message }));
         break;
       case "onceMessage":
-        socket.send("Authentication Failed!");
+        socket.send(JSON.stringify({ type: "Error", message: "Authentication failed" }));
         break;
       default:
-        socket.send("Internal server Error!");
+        socket.send(JSON.stringify({ type: "Error", message: "Internal server Error! - " + message }));
         break;
     }
   };

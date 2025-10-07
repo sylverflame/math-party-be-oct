@@ -1,30 +1,48 @@
 import { ALLOW_NEGATIVE_ANSWERS, DIFFICULTY_SETTINGS } from "./config";
 import { Player } from "./Player";
-import { DifficultyLevel, GameRound, GameSettings, Operator, operators, UserID } from "./types";
+import { DifficultyLevel, GameSettings, RoomCode } from "./Schemas";
+import { GameRound, Operator, operators, UserID } from "./types";
 export class Game {
   private gameId: string;
-  private players: Player[] = [];
+  private roomCode: RoomCode;
   private settings: GameSettings;
-  private rounds: GameRound[];
+  private isMultiplayer: boolean = false;
   private host: UserID;
-
+  private players: Map<UserID, Player> = new Map();
+  private rounds: GameRound[] = [];
   /**
    *
    */
-  constructor(hostId: UserID, settings: GameSettings) {
+  constructor(hostId: UserID, roomCode: RoomCode, settings: GameSettings) {
     this.gameId = crypto.randomUUID();
-    this.host = hostId;
-    const hostPlayer = new Player(hostId, "Host");
-    this.players.push(hostPlayer);
+    this.roomCode = roomCode;
     this.settings = settings;
-    const { totalRounds, difficulty } = this.settings;
-    this.rounds = this.createRounds(totalRounds, difficulty);
+    this.host = hostId;
+    const { isMultiplayer } = this.settings;
+    this.isMultiplayer = isMultiplayer;
+    this.initializeGame(hostId, settings);
   }
+
+  private initializeGame = (hostId: UserID, gameSettings: GameSettings) => {
+    const { totalRounds, difficulty, isMultiplayer } = gameSettings;
+    const hostPlayer = new Player(hostId, "Host");
+    this.players.set(hostId, hostPlayer);
+    this.rounds = this.createRounds(totalRounds, difficulty);
+  };
+
+  joinGame = (userId: UserID) => {
+    const player = new Player(userId, "Player");
+    this.players.set(userId, player);
+  };
+
+  getPlayers = (): UserID[] => {
+    return [...this.players.keys()];
+  };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {
     let rounds: GameRound[] = [];
     for (let i = 0; i < totalRounds; i++) {
-      const operator = this.getRandomOperator();
+      const operator = this.getRandomOperator(operators);
       let isExpressionValid = false;
       let firstNumber = 0;
       let secondNumber = 0;
@@ -32,7 +50,7 @@ export class Game {
         const { first, second } = DIFFICULTY_SETTINGS[gameDifficulty].limits[operator];
         firstNumber = this.getRandomNumber(first.min, first.max);
         secondNumber = this.getRandomNumber(second.min, second.max);
-        isExpressionValid = this.isValidExpression(firstNumber, secondNumber, operator);
+        isExpressionValid = this.isValidExpression(firstNumber, secondNumber, operator, ALLOW_NEGATIVE_ANSWERS);
       }
       rounds.push({ firstNumber, secondNumber, operator });
     }
@@ -43,12 +61,12 @@ export class Game {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
 
-  private getRandomOperator = (): Operator => {
+  private getRandomOperator = (operators: readonly Operator[]): Operator => {
     const randomIndex = Math.floor(Math.random() * operators.length);
     return operators[randomIndex];
   };
 
-  private isValidExpression = (firstNumber: number, secondNumber: number, operator: Operator): boolean => {
+  private isValidExpression = (firstNumber: number, secondNumber: number, operator: Operator, allowNegativeNumbers: boolean): boolean => {
     if (operator === "Divide" && secondNumber === 0) return false;
     if (operator === "Divide" && firstNumber % secondNumber !== 0) return false;
     if (!ALLOW_NEGATIVE_ANSWERS && firstNumber < secondNumber) return false;

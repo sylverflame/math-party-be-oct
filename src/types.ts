@@ -1,8 +1,8 @@
+import { DifficultyLevel } from "./Schemas";
+
 export type UserID = string;
 export const operators = ["Add", "Subtract", "Multiply", "Divide"] as const;
 export type Operator = (typeof operators)[number];
-const difficultyLevels = ["Easy", "Medium", "Hard", "Crazy"] as const;
-export type DifficultyLevel = (typeof difficultyLevels)[number];
 
 // Game Entity types
 export type GameRound = {
@@ -10,12 +10,6 @@ export type GameRound = {
   secondNumber: number;
   operator: Operator;
   solution?: number;
-};
-
-export type GameSettings = {
-  totalRounds: number;
-  timePerRound: number;
-  difficulty: DifficultyLevel;
 };
 
 type NumberLimit = {
