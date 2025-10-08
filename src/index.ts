@@ -61,7 +61,7 @@ app.get("/game", (req, res) => {
 app.get("/game/:roomCode", (req, res) => {
   const { roomCode } = req.params;
   try {
-    const game = gameManager.getGameState(roomCode);
+    const game = gameManager.getGame(roomCode);
     res.json(game);
   } catch (error) {
     res.json({ Error: "Internal Serer Error" });

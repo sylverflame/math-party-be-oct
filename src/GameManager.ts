@@ -1,6 +1,6 @@
 import { MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
-import { CreateGameMessageSchema, JoinRoomMessageSchema, LeaveRoomMessageSchema, RoomCode, WsMessage } from "./Schemas";
+import { CreateGameMessageSchema, JoinLeaveMessageSchema, RoomCode, WsMessage } from "./Schemas";
 import { broadcastMessageToRoom, sendMessage } from "./utils";
 import { AuthedSocket } from "./WebSocketManager";
 
@@ -26,42 +26,29 @@ export class GameManager {
       sendMessage("Success", { message: `Game Created - Room Code - ${roomCode}` }, socket);
     }
 
-    if (message.type === "JOIN_ROOM") {
+    if (message.type === "JOIN_ROOM" || message.type === "LEAVE_ROOM") {
       const { userId } = socket;
-      const parsed = JoinRoomMessageSchema.parse(message);
+      const parsed = JoinLeaveMessageSchema.parse(message);
       const { roomCode } = parsed.payload;
-      const game = this.games.get(roomCode);
+      const game = this.getGame(roomCode);
       if (!game) {
         throw new Error("Game does not exist");
       }
       if (!userId) {
         throw new Error("Invalid user");
       }
-      if (game.getPlayers().includes(userId)) {
-        throw new Error("User is already in the game");
+      if (message.type === "JOIN_ROOM") {
+        if (game.getPlayers().includes(userId)) {
+          throw new Error("User is already in the game");
+        }
+        game.addPlayer(userId);
+        socket.isHostingGame = roomCode;
+        broadcastMessageToRoom("Notification", { message: `Player joined - ${socket.userId}` }, game.getPlayers());
+      } else if (message.type === "LEAVE_ROOM") {
+        socket.isHostingGame = undefined;
+        game.removePlayer(userId);
+        broadcastMessageToRoom("Notification", { message: `Player left - ${socket.userId}` }, game.getPlayers());
       }
-      game.joinGame(userId);
-      sendMessage("Success", { message: `Game Joined - Room Code - ${roomCode}` }, socket);
-      broadcastMessageToRoom("Notification", { message: `Player joined - ${socket.userId}` }, game.getPlayers());
-    }
-
-    if (message.type === "LEAVE_ROOM") {
-      const { userId } = socket;
-      const parsed = LeaveRoomMessageSchema.parse(message);
-      const { roomCode } = parsed.payload;
-      const game = this.games.get(roomCode);
-      if (!game) {
-        throw new Error("Game does not exist");
-      }
-      if (!userId) {
-        throw new Error("Invalid user");
-      }
-      if (game.getPlayers().includes(userId)) {
-        throw new Error("User is already in the game");
-      }
-      game.joinGame(userId);
-      sendMessage("Success", { message: `Game Joined - Room Code - ${roomCode}` }, socket);
-      broadcastMessageToRoom("Notification", { message: `Player joined - ${socket.userId}` }, game.getPlayers());
     }
   };
 
@@ -73,7 +60,7 @@ export class GameManager {
     return [...this.games.keys()];
   };
 
-  getGameState = (roomCode: RoomCode): Game | null => {
+  getGame = (roomCode: RoomCode): Game | null => {
     return this.games.get(roomCode) || null;
   };
 

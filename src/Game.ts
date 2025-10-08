@@ -31,10 +31,16 @@ export class Game {
     this.rounds = this.createRounds(totalRounds, difficulty);
   };
 
-  joinGame = (userId: UserID) => {
+  addPlayer = (userId: UserID) => {
     const player = new Player(userId, "Player");
     this.players.push(player);
   };
+
+  removePlayer = (userId: UserID) => {
+    this.players.forEach((player, index) => {
+        if(player.getUserId() === userId) this.players.splice(index, 1)
+    })
+  }
 
   getPlayers = (): UserID[] => {
     return this.players.map((player) => {

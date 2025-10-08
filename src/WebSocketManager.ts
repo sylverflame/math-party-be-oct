@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
 import { AuthMessage, AuthMessageSchema, MessageSchema, RoomCode, WsMessage } from "./Schemas";
 import { UserID } from "./types";
-import { sendMessage } from "./utils";
+import { broadcastMessageToRoom, sendMessage } from "./utils";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -46,6 +46,12 @@ export class WebSocketManager {
     });
 
     socket.on("close", () => {
+      if (socket.isPlayingGame || socket.isHostingGame) {
+        const roomCode = socket.isHostingGame || socket.isPlayingGame;
+        const game = this.gameManager.getGame(roomCode!);
+        game?.removePlayer(socket.userId!);
+        broadcastMessageToRoom("Notification", { message: `Player left - ${socket.userId}` }, game!.getPlayers());
+      }
       this.cleanUpSocket(socket);
     });
   };
