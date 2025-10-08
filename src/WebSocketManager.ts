@@ -20,9 +20,6 @@ export class WebSocketManager {
   private gameManager: GameManager;
   private eventEmitter: EventEmitter;
 
-  /**
-   *
-   */
   constructor(server: WebSocketServer, gameManager: GameManager, eventEmitter: EventEmitter) {
     this.server = server;
     this.gameManager = gameManager;
@@ -51,7 +48,7 @@ export class WebSocketManager {
 
     socket.on("close", () => {
       if (socket.isPlayingGame || socket.isHostingGame) {
-        this.eventEmitter.emit(SocketManagerEvents.PLAYER_DISCONNECTED, socket.isPlayingGame || socket.isHostingGame, socket.userId);
+        this.eventEmitter.emit(SocketManagerEvents.PLAYER_DISCONNECTED, socket.userId, socket.isPlayingGame || socket.isHostingGame);
         const roomCode = socket.isHostingGame || socket.isPlayingGame;
         const game = this.gameManager.getGame(roomCode!);
         game?.removePlayer(socket.userId!);
@@ -114,8 +111,6 @@ export class WebSocketManager {
           const { roomCode } = JoinLeavePayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.JOIN_ROOM, userId, roomCode);
         }
-        // sendMessage("Message", { message: "Message received!" }, socket);
-        // this.gameManager.handleMessage(socket, parsedMessage);
       } catch (error) {
         this.handleError("onMessage", socket, error);
       }
@@ -189,7 +184,9 @@ export class WebSocketManager {
     this.sendMessageToId(GameManagerEvents.GAME_CREATED, { roomCode }, hostId);
   };
 
-  private onPlayerJoined = (userId: UserID, playersInRoom: UserID[]) => {
+  private onPlayerJoined = (userId: UserID, roomCode: RoomCode, playersInRoom: UserID[]) => {
+    const socket = this.getWebsocket(userId);
+    socket!.isPlayingGame = roomCode;
     this.broadcastMessage(GameManagerEvents.PLAYER_JOINED, { userId }, playersInRoom);
   };
   private onPlayerLeft = (userId: UserID, playersInRoom: UserID[]) => {
