@@ -3,22 +3,23 @@ import http from "http";
 import { WebSocketServer } from "ws";
 import { WebSocketManager } from "./WebSocketManager";
 import { GameManager } from "./GameManager";
-import { sendMessage } from "./utils";
+import EventEmitter from "events";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
-const gameManager = new GameManager();
-export const socketManager = new WebSocketManager(wss, gameManager);
+const eventEmitter = new EventEmitter();
+const gameManager = new GameManager(eventEmitter);
+export const socketManager = new WebSocketManager(wss, gameManager, eventEmitter);
 
 app.get("/socket/:socketId", (req, res) => {
   const { socketId } = req.params;
   const { message } = req.query;
   try {
     const socket = socketManager.getWebsocket(socketId);
-    sendMessage("Message", {message: `Message from get request - ${message ?? "Hello"}`}, socket!)
+    socket?.send("Hello from get request");
     res.json({ Message: `Message sent to ${socketId}` });
   } catch (error) {
     res.json({ Error: "Socket does not exist" });
@@ -42,7 +43,7 @@ app.get("/socket", (req, res) => {
 app.get("/broadcast", (req, res) => {
   const { authOnly } = req.query;
   try {
-    socketManager.broadcastMessage(authOnly === "true");
+    socketManager.broadcastMessageToAllClients(authOnly === "true");
     res.json({ Message: "Success!" });
   } catch (error) {
     res.json({ Error: "Internal Serer Error" });

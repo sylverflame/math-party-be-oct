@@ -1,9 +1,10 @@
+import { EventEmitter } from "events";
 import { WebSocket, WebSocketServer } from "ws";
 import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
-import { AuthMessage, AuthMessageSchema, MessageSchema, RoomCode, WsMessage } from "./Schemas";
-import { UserID } from "./types";
-import { broadcastMessageToRoom, sendMessage } from "./utils";
+import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeavePayloadSchema, RoomCode } from "./Schemas";
+import { ErrorCodes, GameManagerEvents, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
+import { broadcastMessageToRoom } from "./utils";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -14,17 +15,20 @@ export interface AuthedSocket extends WebSocket {
 }
 
 export class WebSocketManager {
-  private connections = new Map<UserID, WebSocket>();
+  private connections = new Map<UserID, AuthedSocket>();
   private server: WebSocketServer;
   private gameManager: GameManager;
+  private eventEmitter: EventEmitter;
 
   /**
    *
    */
-  constructor(server: WebSocketServer, gameManager: GameManager) {
+  constructor(server: WebSocketServer, gameManager: GameManager, eventEmitter: EventEmitter) {
     this.server = server;
     this.gameManager = gameManager;
+    this.eventEmitter = eventEmitter;
     this.initializeServer();
+    this.addEventListeners();
   }
 
   initializeServer = () => {
@@ -38,8 +42,8 @@ export class WebSocketManager {
   initializeSocket = (socket: AuthedSocket) => {
     socket.id = crypto.randomUUID();
     socket.isAuthenticated = false;
-    sendMessage("Message", { message: "Authenticate Yourself" }, socket);
-    socket.once("message", (data: AuthMessage) => this.handleAuthentication(socket, data));
+    this.sendMessageToSocket(OutgoingMessageTypes.MESSAGE, { message: "Authenticate Yourself" }, socket);
+    socket.once("message", (data: any) => this.handleAuthentication(socket, data));
 
     socket.on("error", (error) => {
       console.error(error);
@@ -47,6 +51,7 @@ export class WebSocketManager {
 
     socket.on("close", () => {
       if (socket.isPlayingGame || socket.isHostingGame) {
+        this.eventEmitter.emit(SocketManagerEvents.PLAYER_DISCONNECTED, socket.isPlayingGame || socket.isHostingGame, socket.userId);
         const roomCode = socket.isHostingGame || socket.isPlayingGame;
         const game = this.gameManager.getGame(roomCode!);
         game?.removePlayer(socket.userId!);
@@ -56,10 +61,10 @@ export class WebSocketManager {
     });
   };
 
-  private addWebsocket = (id: string, socket: WebSocket) => {
+  private addWebsocket = (id: string, socket: AuthedSocket) => {
     this.connections.set(id, socket);
   };
-  getWebsocket = (id: string): WebSocket | undefined => {
+  getWebsocket = (id: string): AuthedSocket | undefined => {
     return this.connections.get(id);
   };
   private removeSocket = (id: string): void => {
@@ -79,39 +84,52 @@ export class WebSocketManager {
     return this.server.clients.size;
   };
 
-  broadcastMessage = (authenticatedOnly: boolean = false) => {
+  broadcastMessageToAllClients = (authenticatedOnly: boolean = false) => {
     if (authenticatedOnly) {
       [...this.connections.values()].forEach((socket) => {
-        sendMessage("Message", { message: "Hello authenticated sir!" }, socket);
+        this.sendMessageToSocket(OutgoingMessageTypes.MESSAGE, { message: "Hello authenticated sir!" }, socket);
       });
     } else {
       this.server.clients.forEach((socket) => {
-        sendMessage("Message", { message: "Hello sir!" }, socket);
+        this.sendMessageToSocket(OutgoingMessageTypes.MESSAGE, { message: "Hello sir!" }, socket as AuthedSocket);
       });
     }
   };
 
   private attachMessageHandler = (socket: AuthedSocket) => {
-    socket.on("message", (data: WsMessage) => {
+    socket.on("message", (data: any) => {
       if (!socket.isAuthenticated) {
         throw new Error("Unauthenticated Socket");
       }
       try {
-        const parsedMessage = JSON.parse(data.toString());
-        MessageSchema.parse(parsedMessage);
+        const jsonData = JSON.parse(data.toString());
+        const { type, payload } = IncomingMessageSchema.parse(jsonData);
+        const { userId } = socket;
+        if (type === SocketManagerEvents.CREATE_GAME) {
+          const { settings } = CreateGamePayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.CREATE_GAME, userId, settings);
+        }
+
+        if (type === SocketManagerEvents.JOIN_ROOM) {
+          const { roomCode } = JoinLeavePayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.JOIN_ROOM, userId, roomCode);
+        }
         // sendMessage("Message", { message: "Message received!" }, socket);
-        this.gameManager.handleMessage(socket, parsedMessage);
+        // this.gameManager.handleMessage(socket, parsedMessage);
       } catch (error) {
         this.handleError("onMessage", socket, error);
       }
     });
   };
 
-  private handleAuthentication = (socket: AuthedSocket, data: AuthMessage) => {
+  private handleAuthentication = (socket: AuthedSocket, data: any) => {
     try {
-      const parsed = JSON.parse(data.toString());
-      const validatedMessage = AuthMessageSchema.parse(parsed);
-      const { userId, token } = validatedMessage.payload;
+      const jsonData = JSON.parse(data.toString());
+      const { type, payload } = IncomingMessageSchema.parse(jsonData);
+      if (type !== "AUTHENTICATE_USER") {
+        throw new Error(ErrorCodes.ERR_001);
+      }
+      const { userId, token } = AuthPayloadSchema.parse(payload);
       if ([...this.connections.keys()].includes(userId)) {
         throw new Error("User already exists");
       }
@@ -122,33 +140,68 @@ export class WebSocketManager {
       socket.isAuthenticated = true;
       socket.userId = userId;
       this.addWebsocket(userId, socket);
-      sendMessage("Success", { message: `Authentication Successful - Welcome to the server ${userId}` }, socket);
+      this.sendMessageToSocket(OutgoingMessageTypes.SUCCESS, { message: `Authentication Successful - Welcome to the server ${userId}` }, socket);
 
       // Attach the onMessage event listener once user is validated
       this.attachMessageHandler(socket);
     } catch (error) {
       this.handleError("onceMessage", socket, error);
-      socket.close();
+      socket.close(4001, "Unauthorized Access");
     }
   };
 
-  private handleError = (type: "onMessage" | "onceMessage", socket: WebSocket, error: any) => {
-    const message = error.message;
-    switch (type) {
-      case "onMessage":
-        if (error instanceof ZodError) {
-          const errorMessage = JSON.stringify(error.issues);
-          sendMessage("Error", { message: "Invalid payload! - " + errorMessage }, socket);
-          return;
-        }
-        sendMessage("Error", { message }, socket);
-        break;
-      case "onceMessage":
-        sendMessage("Error", { message: "Authentication failed" }, socket);
-        break;
-      default:
-        sendMessage("Error", { message: "Internal server Error! - " + message }, socket);
-        break;
+  private handleError = (type: "onMessage" | "onceMessage", socket: AuthedSocket, error: any) => {
+    let message = error.message;
+    let info;
+    if (type === "onMessage") {
+      if (error instanceof ZodError) {
+        message = "Invalid payload";
+        info = JSON.stringify(error.issues);
+      }
     }
+
+    if (type === "onceMessage") {
+      message = "Authentication failed";
+    }
+    this.sendMessageToSocket(OutgoingMessageTypes.ERROR, { message, info }, socket);
+  };
+
+  private sendMessageToId = (type: OutgoingMessageTypes | GameManagerEvents, payload: Record<string, any>, userId: UserID) => {
+    const socket = this.getWebsocket(userId);
+    const message = JSON.stringify({ type, payload });
+    socket!.send(message);
+  };
+
+  private sendMessageToSocket = (type: OutgoingMessageTypes | GameManagerEvents, payload: Record<string, any>, socket: AuthedSocket) => {
+    const message = JSON.stringify({ type, payload });
+    socket!.send(message);
+  };
+
+  private broadcastMessage = (type: OutgoingMessageTypes | GameManagerEvents, payload: Record<string, any>, userIds: UserID[]) => {
+    userIds.forEach((userId) => {
+      this.sendMessageToId(type, payload, userId);
+    });
+  };
+
+  private onGameCreated = (roomCode: RoomCode, hostId: UserID) => {
+    const socket = this.getWebsocket(hostId);
+    socket!.isHostingGame = roomCode;
+    this.sendMessageToId(GameManagerEvents.GAME_CREATED, { roomCode }, hostId);
+  };
+
+  private onPlayerJoined = (userId: UserID, playersInRoom: UserID[]) => {
+    this.broadcastMessage(GameManagerEvents.PLAYER_JOINED, { userId }, playersInRoom);
+  };
+  private onPlayerLeft = (userId: UserID, playersInRoom: UserID[]) => {
+    const socket = this.getWebsocket(userId);
+    socket!.isHostingGame = undefined;
+    socket!.isPlayingGame = undefined;
+    this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId }, playersInRoom);
+  };
+
+  private addEventListeners = () => {
+    this.eventEmitter.on(GameManagerEvents.GAME_CREATED, this.onGameCreated);
+    this.eventEmitter.on(GameManagerEvents.PLAYER_JOINED, this.onPlayerJoined);
+    this.eventEmitter.on(GameManagerEvents.PLAYER_LEFT, this.onPlayerLeft);
   };
 }

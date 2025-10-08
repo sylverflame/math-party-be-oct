@@ -11,35 +11,27 @@ export const GameSettingsSchema = z.object({
 });
 
 // Web scoket message schemas
-export const MessageSchema = z.object({
-  type: z.string(),
+const IncomingMessageTypeSchema = z.enum(["AUTHENTICATE_USER", "CREATE_GAME", "JOIN_ROOM", "LEAVE_ROOM"]);
+export const IncomingMessageSchema = z.object({
+  type: IncomingMessageTypeSchema,
   payload: z.any(),
 });
 
-export const AuthMessageSchema = z.object({
-  type: z.literal("AUTH"),
-  payload: z.object({
-    userId: z.string(),
-    token: z.string(),
-  }),
+export const AuthPayloadSchema = z.object({
+  userId: z.string(),
+  token: z.string(),
 });
 
-export const CreateGameMessageSchema = z.object({
-  type: z.literal("CREATE_GAME"),
-  payload: z.object({
-    settings: GameSettingsSchema,
-  }),
+export const CreateGamePayloadSchema = z.object({
+  settings: GameSettingsSchema,
 });
-export const JoinLeaveMessageSchema = z.object({
-  type: z.enum(["JOIN_ROOM", "LEAVE_ROOM"]),
-  payload: z.object({
-    roomCode: RoomCodeSchema,
-  }),
+
+export const JoinLeavePayloadSchema = z.object({
+  roomCode: RoomCodeSchema,
 });
 
 // Types
-export type WsMessage = z.infer<typeof MessageSchema>;
-export type AuthMessage = z.infer<typeof AuthMessageSchema>;
+export type IncomingMessage = z.infer<typeof IncomingMessageSchema>;
 export type RoomCode = z.infer<typeof RoomCodeSchema>;
 export type DifficultyLevel = z.infer<typeof DifficultyLevelSchema>;
 export type GameSettings = z.infer<typeof GameSettingsSchema>;
