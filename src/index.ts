@@ -12,7 +12,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const eventEmitter = new EventEmitter();
 const gameManager = new GameManager(eventEmitter);
-export const socketManager = new WebSocketManager(wss, gameManager, eventEmitter);
+export const socketManager = new WebSocketManager(wss, eventEmitter);
 
 app.get("/socket/:socketId", (req, res) => {
   const { socketId } = req.params;

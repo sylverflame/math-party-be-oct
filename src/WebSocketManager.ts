@@ -4,7 +4,6 @@ import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
 import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeavePayloadSchema, RoomCode } from "./Schemas";
 import { ErrorCodes, GameManagerEvents, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
-import { broadcastMessageToRoom } from "./utils";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -17,12 +16,10 @@ export interface AuthedSocket extends WebSocket {
 export class WebSocketManager {
   private connections = new Map<UserID, AuthedSocket>();
   private server: WebSocketServer;
-  private gameManager: GameManager;
   private eventEmitter: EventEmitter;
 
-  constructor(server: WebSocketServer, gameManager: GameManager, eventEmitter: EventEmitter) {
+  constructor(server: WebSocketServer, eventEmitter: EventEmitter) {
     this.server = server;
-    this.gameManager = gameManager;
     this.eventEmitter = eventEmitter;
     this.initializeServer();
     this.addEventListeners();
@@ -49,10 +46,6 @@ export class WebSocketManager {
     socket.on("close", () => {
       if (socket.isPlayingGame || socket.isHostingGame) {
         this.eventEmitter.emit(SocketManagerEvents.PLAYER_DISCONNECTED, socket.userId, socket.isPlayingGame || socket.isHostingGame);
-        const roomCode = socket.isHostingGame || socket.isPlayingGame;
-        const game = this.gameManager.getGame(roomCode!);
-        game?.removePlayer(socket.userId!);
-        broadcastMessageToRoom("Notification", { message: `Player left - ${socket.userId}` }, game!.getPlayers());
       }
       this.cleanUpSocket(socket);
     });
@@ -108,8 +101,16 @@ export class WebSocketManager {
         }
 
         if (type === SocketManagerEvents.JOIN_ROOM) {
+          if (socket.isPlayingGame || socket.isHostingGame) {
+            throw new Error("Player is in another game");
+          }
           const { roomCode } = JoinLeavePayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.JOIN_ROOM, userId, roomCode);
+        }
+
+        if (type === SocketManagerEvents.LEAVE_ROOM) {
+          const { roomCode } = JoinLeavePayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.LEAVE_ROOM, userId, roomCode);
         }
       } catch (error) {
         this.handleError("onMessage", socket, error);
