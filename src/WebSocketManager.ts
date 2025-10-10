@@ -44,6 +44,8 @@ export class WebSocketManager {
     });
 
     socket.on("close", () => {
+      console.log("Connections closing", socket.userId);
+
       if (socket.isPlayingGame || socket.isHostingGame) {
         this.eventEmitter.emit(SocketManagerEvents.PLAYER_DISCONNECTED, socket.userId, socket.isPlayingGame || socket.isHostingGame);
       }
@@ -96,13 +98,16 @@ export class WebSocketManager {
         const { type, payload } = IncomingMessageSchema.parse(jsonData);
         const { userId } = socket;
         if (type === SocketManagerEvents.CREATE_GAME) {
+          if (socket.isPlayingGame || socket.isHostingGame) {
+            throw new Error("Player is already in a game");
+          }
           const { settings } = CreateGamePayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.CREATE_GAME, userId, settings);
         }
 
         if (type === SocketManagerEvents.JOIN_ROOM) {
           if (socket.isPlayingGame || socket.isHostingGame) {
-            throw new Error("Player is in another game");
+            throw new Error("Player is already in a game");
           }
           const { roomCode } = JoinLeavePayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.JOIN_ROOM, userId, roomCode);
@@ -151,8 +156,12 @@ export class WebSocketManager {
     let info;
     if (type === "onMessage") {
       if (error instanceof ZodError) {
+        const fieldErrors = error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        }));
         message = "Invalid payload";
-        info = JSON.stringify(error.issues);
+        info = JSON.stringify(fieldErrors);
       }
     }
 
@@ -188,13 +197,15 @@ export class WebSocketManager {
   private onPlayerJoined = (userId: UserID, roomCode: RoomCode, playersInRoom: UserID[]) => {
     const socket = this.getWebsocket(userId);
     socket!.isPlayingGame = roomCode;
-    this.broadcastMessage(GameManagerEvents.PLAYER_JOINED, { userId }, playersInRoom);
+    const message = `Player joined - ${userId}`
+    this.broadcastMessage(GameManagerEvents.PLAYER_JOINED, { userId, message }, playersInRoom);
   };
   private onPlayerLeft = (userId: UserID, playersInRoom: UserID[]) => {
     const socket = this.getWebsocket(userId);
     socket!.isHostingGame = undefined;
     socket!.isPlayingGame = undefined;
-    this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId }, playersInRoom);
+    const message = `Player Left - ${userId}`
+    this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId, message }, playersInRoom);
   };
 
   private addEventListeners = () => {
