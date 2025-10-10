@@ -17,7 +17,8 @@ export class GameManager {
     const roomCode = this.generateRoomCode(MULTIPLAYER_ROOMCODE_LENGTH);
     const game = new Game(userId!, roomCode, settings);
     this.addGame(roomCode, game);
-    this.eventEmitter.emit(GameManagerEvents.GAME_CREATED, roomCode, userId);
+    const state = game.getState()
+    this.eventEmitter.emit(GameManagerEvents.GAME_CREATED, roomCode, userId, state);
   };
 
   private onJoinRoom = (userId: UserID, roomCode: RoomCode) => {
@@ -31,7 +32,8 @@ export class GameManager {
     }
     // Add player to game
     game.addPlayer(userId);
-    this.eventEmitter.emit(GameManagerEvents.PLAYER_JOINED, userId, roomCode, game.getPlayers());
+    const state = game.getState()
+    this.eventEmitter.emit(GameManagerEvents.PLAYER_JOINED, userId, roomCode, game.getPlayers(), state);
   };
 
   private onPlayerDisconnectOrLeave = (userId: UserID, roomCode: RoomCode) => {
@@ -40,7 +42,8 @@ export class GameManager {
       throw new Error("Game does not exist");
     }
     game.removePlayer(userId);
-    this.eventEmitter.emit(GameManagerEvents.PLAYER_LEFT, userId, game.getPlayers());
+    const state = game.getState()
+    this.eventEmitter.emit(GameManagerEvents.PLAYER_LEFT, userId, game.getPlayers(), state);
   };
 
   private addEventListeners = () => {

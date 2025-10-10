@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
 import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeavePayloadSchema, RoomCode } from "./Schemas";
 import { ErrorCodes, GameManagerEvents, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
+import { Game } from "./Game";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -188,24 +189,24 @@ export class WebSocketManager {
     });
   };
 
-  private onGameCreated = (roomCode: RoomCode, hostId: UserID) => {
+  private onGameCreated = (roomCode: RoomCode, hostId: UserID, gameState: Partial<Game>) => {
     const socket = this.getWebsocket(hostId);
     socket!.isHostingGame = roomCode;
-    this.sendMessageToId(GameManagerEvents.GAME_CREATED, { roomCode }, hostId);
+    this.sendMessageToId(GameManagerEvents.GAME_CREATED, { roomCode, gameState }, hostId);
   };
 
-  private onPlayerJoined = (userId: UserID, roomCode: RoomCode, playersInRoom: UserID[]) => {
+  private onPlayerJoined = (userId: UserID, roomCode: RoomCode, playersInRoom: UserID[], gameState: Partial<Game>) => {
     const socket = this.getWebsocket(userId);
     socket!.isPlayingGame = roomCode;
-    const message = `Player joined - ${userId}`
-    this.broadcastMessage(GameManagerEvents.PLAYER_JOINED, { userId, message }, playersInRoom);
+    const message = `Player joined - ${userId}`;
+    this.broadcastMessage(GameManagerEvents.PLAYER_JOINED, { userId, message, gameState }, playersInRoom);
   };
-  private onPlayerLeft = (userId: UserID, playersInRoom: UserID[]) => {
+  private onPlayerLeft = (userId: UserID, playersInRoom: UserID[], gameState: Partial<Game>) => {
     const socket = this.getWebsocket(userId);
     socket!.isHostingGame = undefined;
     socket!.isPlayingGame = undefined;
-    const message = `Player Left - ${userId}`
-    this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId, message }, playersInRoom);
+    const message = `Player Left - ${userId}`;
+    this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId, message, gameState }, playersInRoom);
   };
 
   private addEventListeners = () => {
