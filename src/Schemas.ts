@@ -4,9 +4,10 @@ import { MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 export const RoomCodeSchema = z.string().length(MULTIPLAYER_ROOMCODE_LENGTH);
 export const DifficultyLevelSchema = z.enum(["Easy", "Medium", "Hard", "Crazy"]);
 export const GameSettingsSchema = z.object({
-  totalRounds: z.number(),
-  timePerRound: z.number(),
+  totalRounds: z.coerce.number(),
+  timePerRound: z.coerce.number(),
   isMultiplayer: z.boolean(),
+  isPrivateGame: z.boolean(),
   difficulty: DifficultyLevelSchema,
 });
 
