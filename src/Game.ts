@@ -7,8 +7,8 @@ export class Game {
   private roomCode: RoomCode;
   private settings: GameSettings;
   private isMultiplayer: boolean = false;
+  private isPrivateGame: boolean = true;
   private host: UserID;
-//   private players: Map<UserID, Player> = new Map();
   private players: Player[] = [];
   private rounds: GameRound[] = [];
   /**
@@ -19,8 +19,9 @@ export class Game {
     this.roomCode = roomCode;
     this.settings = settings;
     this.host = hostId;
-    const { isMultiplayer } = this.settings;
+    const { isMultiplayer, isPrivateGame } = this.settings;
     this.isMultiplayer = isMultiplayer;
+    this.isPrivateGame = isPrivateGame;
     this.initializeGame(hostId, settings);
   }
 
@@ -38,14 +39,22 @@ export class Game {
 
   removePlayer = (userId: UserID) => {
     this.players.forEach((player, index) => {
-        if(player.getUserId() === userId) this.players.splice(index, 1)
-    })
-  }
+      if (player.getUserId() === userId) this.players.splice(index, 1);
+    });
+  };
 
   getPlayers = (): UserID[] => {
     return this.players.map((player) => {
-        return player.getUserId()
-    })
+      return player.getUserId();
+    });
+  };
+
+  getState = () => {
+    return {
+      roomCode: this.roomCode,
+      host: this.host,
+      players: this.players,
+    };
   };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {
