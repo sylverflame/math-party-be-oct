@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
 import { GameSettings, RoomCode } from "./Schemas";
-import { GameManagerEvents, SocketManagerEvents, UserID } from "./types";
+import { GameManagerEvents, GameStatus, SocketManagerEvents, UserID } from "./types";
 
 export class GameManager {
   private games = new Map<RoomCode, Game>();
@@ -17,6 +17,7 @@ export class GameManager {
     const roomCode = this.generateRoomCode(MULTIPLAYER_ROOMCODE_LENGTH);
     const game = new Game(userId!, roomCode, settings);
     this.addGame(roomCode, game);
+    game.setStatus(GameStatus.WAITING_TO_START)
     const state = game.getState();
     this.eventEmitter.emit(GameManagerEvents.GAME_CREATED, roomCode, userId, state);
   };

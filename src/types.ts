@@ -71,6 +71,12 @@ type Setting = {
   limits: Record<Operator, NumberLimit>;
 };
 
+export enum GameStatus {
+    INITIALIZING_GAME = "INITIALIZING_GAME",
+    WAITING_TO_START = "WAITING_TO_START",
+    GAME_IN_PROGRESS = "GAME_IN_PROGRESS"
+}
+
 export type GameDifficultyConfig = Record<DifficultyLevel, Setting>;
 
 // Player Entitity types

@@ -1,7 +1,7 @@
 import { ALLOW_NEGATIVE_ANSWERS, DIFFICULTY_SETTINGS } from "./config";
 import { Player } from "./Player";
 import { DifficultyLevel, GameSettings, RoomCode } from "./Schemas";
-import { GameRound, Operator, operators, UserID } from "./types";
+import { GameRound, GameStatus, Operator, operators, UserID } from "./types";
 export class Game {
   private gameId: string;
   private roomCode: RoomCode;
@@ -11,6 +11,7 @@ export class Game {
   private host: UserID;
   private players: Player[] = [];
   private rounds: GameRound[] = [];
+  private status: GameStatus;
   /**
    *
    */
@@ -22,6 +23,7 @@ export class Game {
     const { isMultiplayer, isPrivateGame } = this.settings;
     this.isMultiplayer = isMultiplayer;
     this.isPrivateGame = isPrivateGame;
+    this.status = GameStatus.INITIALIZING_GAME;
     this.initializeGame(hostId, settings);
   }
 
@@ -54,7 +56,12 @@ export class Game {
       roomCode: this.roomCode,
       host: this.host,
       players: this.players,
+      status: this.status
     };
+  };
+
+  setStatus = (status: GameStatus) => {
+    this.status = status;
   };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {
