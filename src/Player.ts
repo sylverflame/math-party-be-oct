@@ -5,6 +5,7 @@ export class Player {
   private role: PlayerRole;
   private scores: PlayerScore[];
   private totalScore: number;
+  private currentRound: number = 1;
 
   /**
    *
@@ -18,8 +19,13 @@ export class Player {
 
   private updateScore = (round: number, score: number) => {
     this.scores.push({ round, score });
+    this.currentRound += 1;
     this.totalScore += score;
   };
+
+  getCurrentRound = (): number => {
+    return this.currentRound;
+  }
 
   getUserId = () => {
     return this.userId

@@ -7,24 +7,25 @@ export const sendMessageTypes = ["Message", "Error", "Success", "Notification"] 
 export type SendMessageType = (typeof sendMessageTypes)[number];
 
 export enum OutgoingMessageTypes {
-    MESSAGE = "MESSAGE",
-    ERROR = "ERROR",
-    SUCCESS = "SUCCESS",
-    NOTIFICATION = "NOTIFICATION"
+  MESSAGE = "MESSAGE",
+  ERROR = "ERROR",
+  SUCCESS = "SUCCESS",
+  NOTIFICATION = "NOTIFICATION",
 }
 
 export enum SocketManagerEvents {
-    CREATE_GAME = "CREATE_GAME",
-    JOIN_ROOM = "JOIN_ROOM",
-    LEAVE_ROOM = "LEAVE_ROOM",
-    PLAYER_DISCONNECTED = "PLAYER_DISCONNECTED"
+  CREATE_GAME = "CREATE_GAME",
+  JOIN_ROOM = "JOIN_ROOM",
+  LEAVE_ROOM = "LEAVE_ROOM",
+  PLAYER_DISCONNECTED = "PLAYER_DISCONNECTED",
+  START_GAME = "START_GAME",
 }
 
-
 export enum GameManagerEvents {
-    GAME_CREATED = "GAME_CREATED",
-    PLAYER_JOINED = "PLAYER_JOINED",
-    PLAYER_LEFT = "PLAYER_LEFT"
+  GAME_CREATED = "GAME_CREATED",
+  PLAYER_JOINED = "PLAYER_JOINED",
+  PLAYER_LEFT = "PLAYER_LEFT",
+  GAME_STARTED = "GAME_STARTED",
 }
 
 export enum Status {
@@ -51,7 +52,6 @@ export enum ErrorCodes {
   ERR_011 = "ERR_011: Missing environment variables",
 }
 
-
 // Game Entity types
 export type GameRound = {
   firstNumber: number;
@@ -72,9 +72,9 @@ type Setting = {
 };
 
 export enum GameStatus {
-    INITIALIZING_GAME = "INITIALIZING_GAME",
-    WAITING_TO_START = "WAITING_TO_START",
-    GAME_IN_PROGRESS = "GAME_IN_PROGRESS"
+  INITIALIZING_GAME = "INITIALIZING_GAME",
+  WAITING_TO_START = "WAITING_TO_START",
+  GAME_IN_PROGRESS = "GAME_IN_PROGRESS",
 }
 
 export type GameDifficultyConfig = Record<DifficultyLevel, Setting>;

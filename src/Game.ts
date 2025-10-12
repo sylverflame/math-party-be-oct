@@ -56,12 +56,23 @@ export class Game {
       roomCode: this.roomCode,
       host: this.host,
       players: this.players,
-      status: this.status
+      status: this.status,
     };
   };
 
   setStatus = (status: GameStatus) => {
     this.status = status;
+  };
+
+  getStatus = (): GameStatus => {
+    return this.status;
+  };
+
+  getRound = (roundNumber: number) => {
+    if (!(roundNumber <= this.rounds.length)) {
+      throw new Error("Invalid round");
+    }
+    return this.rounds[roundNumber - 1];
   };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {

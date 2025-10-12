@@ -12,7 +12,7 @@ export const GameSettingsSchema = z.object({
 });
 
 // Web scoket message schemas
-const IncomingMessageTypeSchema = z.enum(["AUTHENTICATE_USER", "CREATE_GAME", "JOIN_ROOM", "LEAVE_ROOM"]);
+const IncomingMessageTypeSchema = z.enum(["AUTHENTICATE_USER", "CREATE_GAME", "JOIN_ROOM", "LEAVE_ROOM", "START_GAME"]);
 export const IncomingMessageSchema = z.object({
   type: IncomingMessageTypeSchema,
   payload: z.any(),
@@ -27,7 +27,7 @@ export const CreateGamePayloadSchema = z.object({
   settings: GameSettingsSchema,
 });
 
-export const JoinLeavePayloadSchema = z.object({
+export const JoinLeaveStartPayloadSchema = z.object({
   roomCode: RoomCodeSchema,
 });
 

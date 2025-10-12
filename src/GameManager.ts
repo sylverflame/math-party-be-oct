@@ -17,7 +17,7 @@ export class GameManager {
     const roomCode = this.generateRoomCode(MULTIPLAYER_ROOMCODE_LENGTH);
     const game = new Game(userId!, roomCode, settings);
     this.addGame(roomCode, game);
-    game.setStatus(GameStatus.WAITING_TO_START)
+    game.setStatus(GameStatus.WAITING_TO_START);
     const state = game.getState();
     this.eventEmitter.emit(GameManagerEvents.GAME_CREATED, roomCode, userId, state);
   };
@@ -50,11 +50,26 @@ export class GameManager {
     }
   };
 
+  private onStartGame = (userId: UserID, roomCode: RoomCode) => {
+    const game = this.getGame(roomCode);
+    if (!game) {
+      throw new Error("Game does not exist");
+    }
+    if (game.getStatus() === GameStatus.GAME_IN_PROGRESS) {
+      throw new Error("Game already started");
+    }
+    game.setStatus(GameStatus.GAME_IN_PROGRESS);
+    const round = game.getRound(1);
+    const state = game.getState();
+    this.eventEmitter.emit(GameManagerEvents.GAME_STARTED, game.getPlayers(), round, state);
+  };
+
   private addEventListeners = () => {
     this.eventEmitter.on(SocketManagerEvents.CREATE_GAME, this.onCreateGame);
     this.eventEmitter.on(SocketManagerEvents.JOIN_ROOM, this.onJoinRoom);
     this.eventEmitter.on(SocketManagerEvents.LEAVE_ROOM, this.onPlayerDisconnectOrLeave);
     this.eventEmitter.on(SocketManagerEvents.PLAYER_DISCONNECTED, this.onPlayerDisconnectOrLeave);
+    this.eventEmitter.on(SocketManagerEvents.START_GAME, this.onStartGame);
   };
 
   private addGame = (roomCode: RoomCode, game: Game) => {

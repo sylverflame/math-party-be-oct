@@ -2,8 +2,8 @@ import { EventEmitter } from "events";
 import { WebSocket, WebSocketServer } from "ws";
 import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
-import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeavePayloadSchema, RoomCode } from "./Schemas";
-import { ErrorCodes, GameManagerEvents, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
+import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeaveStartPayloadSchema, RoomCode } from "./Schemas";
+import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 import { Game } from "./Game";
 
 export interface AuthedSocket extends WebSocket {
@@ -110,13 +110,18 @@ export class WebSocketManager {
           if (socket.isPlayingGame || socket.isHostingGame) {
             throw new Error("Player is already in a game");
           }
-          const { roomCode } = JoinLeavePayloadSchema.parse(payload);
+          const { roomCode } = JoinLeaveStartPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.JOIN_ROOM, userId, roomCode);
         }
 
         if (type === SocketManagerEvents.LEAVE_ROOM) {
-          const { roomCode } = JoinLeavePayloadSchema.parse(payload);
+          const { roomCode } = JoinLeaveStartPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.LEAVE_ROOM, userId, roomCode);
+        }
+
+        if (type === SocketManagerEvents.START_GAME) {
+          const { roomCode } = JoinLeaveStartPayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.START_GAME, userId, roomCode);
         }
       } catch (error) {
         this.handleError("onMessage", socket, error);
@@ -209,9 +214,15 @@ export class WebSocketManager {
     this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId, message, gameState }, playersInRoom);
   };
 
+  private onGameStarted = (playersInRoom: UserID[], round: GameRound, gameState: Partial<Game>) => {
+    const message = `Game started`;
+    this.broadcastMessage(GameManagerEvents.GAME_STARTED, { message, gameState, round }, playersInRoom);
+  };
+
   private addEventListeners = () => {
     this.eventEmitter.on(GameManagerEvents.GAME_CREATED, this.onGameCreated);
     this.eventEmitter.on(GameManagerEvents.PLAYER_JOINED, this.onPlayerJoined);
     this.eventEmitter.on(GameManagerEvents.PLAYER_LEFT, this.onPlayerLeft);
+    this.eventEmitter.on(GameManagerEvents.GAME_STARTED, this.onGameStarted);
   };
 }
