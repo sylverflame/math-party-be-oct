@@ -1,3 +1,4 @@
+import { MAX_SCORE } from "./config";
 import { PlayerRole, PlayerScore, UserID } from "./types";
 
 export class Player {
@@ -20,14 +21,14 @@ export class Player {
   updateScore = (round: number, score: number) => {
     this.scores.push({ round, score });
     this.currentRound += 1;
-    this.totalScore += score;
+    this.totalScore = MAX_SCORE - score;
   };
 
   getCurrentRound = (): number => {
     return this.currentRound;
-  }
+  };
 
   getUserId = () => {
-    return this.userId
-  }
+    return this.userId;
+  };
 }

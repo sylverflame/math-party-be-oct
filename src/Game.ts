@@ -12,6 +12,7 @@ export class Game {
   private host: UserID;
   private players: Player[] = [];
   private rounds: GameRound[] = [];
+  private playersFinished: UserID[] = [];
   /**
    *
    */
@@ -80,6 +81,10 @@ export class Game {
     }
     return this.rounds[roundNumber - 1];
   };
+
+  playerFinished = (userId: UserID) => {
+    this.playersFinished.push(userId)
+  }
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {
     let rounds: GameRound[] = [];

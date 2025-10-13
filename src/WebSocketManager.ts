@@ -225,10 +225,12 @@ export class WebSocketManager {
   };
   private onNextRound = (userId: UserID, playersInRoom: UserID[], round: GameRound | null, gameState: Partial<Game>) => {
     let message;
-    if(!round){
-        message = "Rounds completed"
+    if (!round) {
+      message = "Game finished";
+      this.sendMessageToId(OutgoingMessageTypes.PLAYER_GAME_FINISHED, { message }, userId);
+    } else {
+      this.sendMessageToId(GameManagerEvents.NEXT_ROUND, { round, message }, userId);
     }
-    this.sendMessageToId(GameManagerEvents.NEXT_ROUND, { round, message }, userId);
     this.broadcastMessage(OutgoingMessageTypes.STATE_UPDATED, { gameState }, playersInRoom);
   };
 

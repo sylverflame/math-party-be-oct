@@ -11,7 +11,8 @@ export enum OutgoingMessageTypes {
   ERROR = "ERROR",
   SUCCESS = "SUCCESS",
   NOTIFICATION = "NOTIFICATION",
-  STATE_UPDATED = "STATE_UPDATED"
+  STATE_UPDATED = "STATE_UPDATED",
+  PLAYER_GAME_FINISHED = "PLAYER_GAME_FINISHED",
 }
 
 export enum SocketManagerEvents {
@@ -28,7 +29,7 @@ export enum GameManagerEvents {
   PLAYER_JOINED = "PLAYER_JOINED",
   PLAYER_LEFT = "PLAYER_LEFT",
   GAME_STARTED = "GAME_STARTED",
-  NEXT_ROUND = "NEXT_ROUND"
+  NEXT_ROUND = "NEXT_ROUND",
 }
 
 export enum Status {
