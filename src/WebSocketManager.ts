@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { WebSocket, WebSocketServer } from "ws";
 import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
-import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeaveStartPayloadSchema, RoomCode } from "./Schemas";
+import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeaveStartPayloadSchema, RoomCode, SolutionPayloadSchema } from "./Schemas";
 import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 import { Game } from "./Game";
 
@@ -123,6 +123,11 @@ export class WebSocketManager {
           const { roomCode } = JoinLeaveStartPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.START_GAME, userId, roomCode);
         }
+
+        if (type === SocketManagerEvents.SOLUTION_SUBMIT) {
+          const { roomCode, round, score } = SolutionPayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.SOLUTION_SUBMIT, userId, roomCode, round, score);
+        }
       } catch (error) {
         this.handleError("onMessage", socket, error);
       }
@@ -218,11 +223,20 @@ export class WebSocketManager {
     const message = `Game started`;
     this.broadcastMessage(GameManagerEvents.GAME_STARTED, { message, gameState, round }, playersInRoom);
   };
+  private onNextRound = (userId: UserID, playersInRoom: UserID[], round: GameRound | null, gameState: Partial<Game>) => {
+    let message;
+    if(!round){
+        message = "Rounds completed"
+    }
+    this.sendMessageToId(GameManagerEvents.NEXT_ROUND, { round, message }, userId);
+    this.broadcastMessage(OutgoingMessageTypes.STATE_UPDATED, { gameState }, playersInRoom);
+  };
 
   private addEventListeners = () => {
     this.eventEmitter.on(GameManagerEvents.GAME_CREATED, this.onGameCreated);
     this.eventEmitter.on(GameManagerEvents.PLAYER_JOINED, this.onPlayerJoined);
     this.eventEmitter.on(GameManagerEvents.PLAYER_LEFT, this.onPlayerLeft);
     this.eventEmitter.on(GameManagerEvents.GAME_STARTED, this.onGameStarted);
+    this.eventEmitter.on(GameManagerEvents.NEXT_ROUND, this.onNextRound);
   };
 }

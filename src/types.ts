@@ -11,6 +11,7 @@ export enum OutgoingMessageTypes {
   ERROR = "ERROR",
   SUCCESS = "SUCCESS",
   NOTIFICATION = "NOTIFICATION",
+  STATE_UPDATED = "STATE_UPDATED"
 }
 
 export enum SocketManagerEvents {
@@ -19,6 +20,7 @@ export enum SocketManagerEvents {
   LEAVE_ROOM = "LEAVE_ROOM",
   PLAYER_DISCONNECTED = "PLAYER_DISCONNECTED",
   START_GAME = "START_GAME",
+  SOLUTION_SUBMIT = "SOLUTION_SUBMIT",
 }
 
 export enum GameManagerEvents {
@@ -26,6 +28,7 @@ export enum GameManagerEvents {
   PLAYER_JOINED = "PLAYER_JOINED",
   PLAYER_LEFT = "PLAYER_LEFT",
   GAME_STARTED = "GAME_STARTED",
+  NEXT_ROUND = "NEXT_ROUND"
 }
 
 export enum Status {
@@ -54,6 +57,7 @@ export enum ErrorCodes {
 
 // Game Entity types
 export type GameRound = {
+  roundNumber: number;
   firstNumber: number;
   secondNumber: number;
   operator: Operator;

@@ -5,13 +5,13 @@ import { GameRound, GameStatus, Operator, operators, UserID } from "./types";
 export class Game {
   private gameId: string;
   private roomCode: RoomCode;
+  private status: GameStatus;
   private settings: GameSettings;
   private isMultiplayer: boolean = false;
   private isPrivateGame: boolean = true;
   private host: UserID;
   private players: Player[] = [];
   private rounds: GameRound[] = [];
-  private status: GameStatus;
   /**
    *
    */
@@ -45,6 +45,12 @@ export class Game {
     });
   };
 
+  getPlayer = (userId: UserID): Player => {
+    return this.players.filter((player) => {
+      if (player.getUserId() === userId) return player;
+    })[0];
+  };
+
   getPlayers = (): UserID[] => {
     return this.players.map((player) => {
       return player.getUserId();
@@ -68,9 +74,9 @@ export class Game {
     return this.status;
   };
 
-  getRound = (roundNumber: number) => {
-    if (!(roundNumber <= this.rounds.length)) {
-      throw new Error("Invalid round");
+  getRound = (roundNumber: number): GameRound | null => {
+    if (roundNumber > this.rounds.length) {
+      return null
     }
     return this.rounds[roundNumber - 1];
   };
@@ -88,7 +94,7 @@ export class Game {
         secondNumber = this.getRandomNumber(second.min, second.max);
         isExpressionValid = this.isValidExpression(firstNumber, secondNumber, operator, ALLOW_NEGATIVE_ANSWERS);
       }
-      rounds.push({ firstNumber, secondNumber, operator });
+      rounds.push({ roundNumber: i + 1, firstNumber, secondNumber, operator });
     }
     return rounds;
   };

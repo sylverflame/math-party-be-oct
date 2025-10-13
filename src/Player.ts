@@ -17,7 +17,7 @@ export class Player {
     this.totalScore = 0;
   }
 
-  private updateScore = (round: number, score: number) => {
+  updateScore = (round: number, score: number) => {
     this.scores.push({ round, score });
     this.currentRound += 1;
     this.totalScore += score;

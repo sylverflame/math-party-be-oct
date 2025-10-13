@@ -64,12 +64,25 @@ export class GameManager {
     this.eventEmitter.emit(GameManagerEvents.GAME_STARTED, game.getPlayers(), round, state);
   };
 
+  private onSolutionSubmit = (userId: UserID, roomCode: RoomCode, roundNumber: number, score: number) => {
+    const game = this.getGame(roomCode);
+    if (!game) {
+      throw new Error("Game does not exist");
+    }
+    const player = game.getPlayer(userId);
+    player.updateScore(roundNumber, score)
+    const round = game.getRound(roundNumber + 1);
+    const state = game.getState();
+    this.eventEmitter.emit(GameManagerEvents.NEXT_ROUND, userId, game.getPlayers(), round, state);
+  };
+
   private addEventListeners = () => {
     this.eventEmitter.on(SocketManagerEvents.CREATE_GAME, this.onCreateGame);
     this.eventEmitter.on(SocketManagerEvents.JOIN_ROOM, this.onJoinRoom);
     this.eventEmitter.on(SocketManagerEvents.LEAVE_ROOM, this.onPlayerDisconnectOrLeave);
     this.eventEmitter.on(SocketManagerEvents.PLAYER_DISCONNECTED, this.onPlayerDisconnectOrLeave);
     this.eventEmitter.on(SocketManagerEvents.START_GAME, this.onStartGame);
+    this.eventEmitter.on(SocketManagerEvents.SOLUTION_SUBMIT, this.onSolutionSubmit);
   };
 
   private addGame = (roomCode: RoomCode, game: Game) => {
