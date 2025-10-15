@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { WebSocket, WebSocketServer } from "ws";
 import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
-import { AuthPayloadSchema, CreateGamePayloadSchema, IncomingMessageSchema, JoinLeaveStartPayloadSchema, RoomCode, SolutionPayloadSchema } from "./Schemas";
+import { AuthPayloadSchema, CreateGamePayloadSchema, ClientMessageSchema, JoinLeaveStartPayloadSchema, RoomCode, SolutionPayloadSchema } from "./Schemas";
 import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 import { Game } from "./Game";
 
@@ -96,7 +96,7 @@ export class WebSocketManager {
       }
       try {
         const jsonData = JSON.parse(data.toString());
-        const { type, payload } = IncomingMessageSchema.parse(jsonData);
+        const { type, payload } = ClientMessageSchema.parse(jsonData);
         const { userId } = socket;
         if (type === SocketManagerEvents.CREATE_GAME) {
           if (socket.isPlayingGame || socket.isHostingGame) {
@@ -137,7 +137,7 @@ export class WebSocketManager {
   private handleAuthentication = (socket: AuthedSocket, data: any) => {
     try {
       const jsonData = JSON.parse(data.toString());
-      const { type, payload } = IncomingMessageSchema.parse(jsonData);
+      const { type, payload } = ClientMessageSchema.parse(jsonData);
       if (type !== "AUTHENTICATE_USER") {
         throw new Error(ErrorCodes.ERR_001);
       }
