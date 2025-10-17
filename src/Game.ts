@@ -3,7 +3,7 @@ import { Player } from "./Player";
 import { DifficultyLevel, GameSettings, RoomCode } from "./Schemas";
 import { GameRound, GameStatus, Operator, operators, UserID } from "./types";
 export class Game {
-  private gameId: string;
+  // private gameId: string;
   private roomCode: RoomCode;
   private status: GameStatus;
   private settings: GameSettings;
@@ -17,7 +17,7 @@ export class Game {
    *
    */
   constructor(hostId: UserID, roomCode: RoomCode, settings: GameSettings) {
-    this.gameId = crypto.randomUUID();
+    // this.gameId = crypto.randomUUID();
     this.roomCode = roomCode;
     this.settings = settings;
     this.host = hostId;
