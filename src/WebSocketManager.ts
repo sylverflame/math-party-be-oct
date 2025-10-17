@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { WebSocket, WebSocketServer } from "ws";
 import { ZodError } from "zod";
 import { GameManager } from "./GameManager";
-import { AuthPayloadSchema, CreateGamePayloadSchema, ClientMessageSchema, JoinLeaveStartPayloadSchema, RoomCode, SolutionPayloadSchema } from "./Schemas";
+import { AuthPayloadSchema, CreateGamePayloadSchema, ClientMessageSchema, JoinLeaveStartPayloadSchema, RoomCode, SolutionPayloadSchema, SendMessagePayloadSchema } from "./Schemas";
 import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 import { Game } from "./Game";
 
@@ -104,6 +104,11 @@ export class WebSocketManager {
           }
           const { settings } = CreateGamePayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.CREATE_GAME, userId, settings);
+        }
+
+        if (type === SocketManagerEvents.SEND_CHAT_MESSAGE) {
+          const { roomCode, message } = SendMessagePayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.SEND_CHAT_MESSAGE, userId, roomCode, message);
         }
 
         if (type === SocketManagerEvents.JOIN_ROOM) {
@@ -234,11 +239,16 @@ export class WebSocketManager {
     this.broadcastMessage(OutgoingMessageTypes.STATE_UPDATED, { gameState }, playersInRoom);
   };
 
+  private onBroadcastMessage = (userId: UserID, playersInRoom: UserID[], message: Partial<Game>) => {
+    this.broadcastMessage(OutgoingMessageTypes.CHAT_MESSAGE, { userId, message }, playersInRoom);
+  };
+
   private addEventListeners = () => {
     this.eventEmitter.on(GameManagerEvents.GAME_CREATED, this.onGameCreated);
     this.eventEmitter.on(GameManagerEvents.PLAYER_JOINED, this.onPlayerJoined);
     this.eventEmitter.on(GameManagerEvents.PLAYER_LEFT, this.onPlayerLeft);
     this.eventEmitter.on(GameManagerEvents.GAME_STARTED, this.onGameStarted);
     this.eventEmitter.on(GameManagerEvents.NEXT_ROUND, this.onNextRound);
+    this.eventEmitter.on(GameManagerEvents.BROADCAST_MESSAGE, this.onBroadcastMessage);
   };
 }

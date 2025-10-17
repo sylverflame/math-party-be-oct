@@ -13,6 +13,7 @@ export enum OutgoingMessageTypes {
   NOTIFICATION = "NOTIFICATION",
   STATE_UPDATED = "STATE_UPDATED",
   PLAYER_GAME_FINISHED = "PLAYER_GAME_FINISHED",
+  CHAT_MESSAGE = "CHAT_MESSAGE"
 }
 
 export enum SocketManagerEvents {
@@ -22,6 +23,7 @@ export enum SocketManagerEvents {
   PLAYER_DISCONNECTED = "PLAYER_DISCONNECTED",
   START_GAME = "START_GAME",
   SOLUTION_SUBMIT = "SOLUTION_SUBMIT",
+  SEND_CHAT_MESSAGE = "SEND_CHAT_MESSAGE"
 }
 
 export enum GameManagerEvents {
@@ -30,6 +32,7 @@ export enum GameManagerEvents {
   PLAYER_LEFT = "PLAYER_LEFT",
   GAME_STARTED = "GAME_STARTED",
   NEXT_ROUND = "NEXT_ROUND",
+  BROADCAST_MESSAGE = "BROADCAST_MESSAGE"
 }
 
 export enum Status {

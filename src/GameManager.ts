@@ -70,10 +70,18 @@ export class GameManager {
       throw new Error("Game does not exist");
     }
     const player = game.getPlayer(userId);
-    player.updateScore(roundNumber, score)
+    player.updateScore(roundNumber, score);
     const round = game.getRound(roundNumber + 1);
     const state = game.getState();
     this.eventEmitter.emit(GameManagerEvents.NEXT_ROUND, userId, game.getPlayers(), round, state);
+  };
+
+  private onSendChatMessage = (userId: UserID, roomCode: RoomCode, message: string) => {
+    const game = this.getGame(roomCode);
+    if (!game) {
+      throw new Error("Game does not exist");
+    }
+    this.eventEmitter.emit(GameManagerEvents.BROADCAST_MESSAGE, userId, game.getPlayers(), message);
   };
 
   private addEventListeners = () => {
@@ -83,6 +91,7 @@ export class GameManager {
     this.eventEmitter.on(SocketManagerEvents.PLAYER_DISCONNECTED, this.onPlayerDisconnectOrLeave);
     this.eventEmitter.on(SocketManagerEvents.START_GAME, this.onStartGame);
     this.eventEmitter.on(SocketManagerEvents.SOLUTION_SUBMIT, this.onSolutionSubmit);
+    this.eventEmitter.on(SocketManagerEvents.SEND_CHAT_MESSAGE, this.onSendChatMessage);
   };
 
   private addGame = (roomCode: RoomCode, game: Game) => {

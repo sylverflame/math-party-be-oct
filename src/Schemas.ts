@@ -1,7 +1,7 @@
 import z, { infer } from "zod";
 import { MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 
-export const RoomCodeSchema = z.string().length(MULTIPLAYER_ROOMCODE_LENGTH);
+export const RoomCodeSchema = z.string().length(MULTIPLAYER_ROOMCODE_LENGTH, { error: "Invalid room code" });
 export const DifficultyLevelSchema = z.enum(["Easy", "Medium", "Hard", "Crazy"]);
 export const GameSettingsSchema = z.object({
   totalRounds: z.coerce.number(),
@@ -12,7 +12,7 @@ export const GameSettingsSchema = z.object({
 });
 
 // Web scoket message schemas
-const ClientMessageTypeSchema = z.enum(["AUTHENTICATE_USER", "CREATE_GAME", "JOIN_ROOM", "LEAVE_ROOM", "START_GAME", "SOLUTION_SUBMIT"]);
+const ClientMessageTypeSchema = z.enum(["AUTHENTICATE_USER", "CREATE_GAME", "JOIN_ROOM", "LEAVE_ROOM", "START_GAME", "SOLUTION_SUBMIT", "SEND_CHAT_MESSAGE"]);
 export const ClientMessageSchema = z.object({
   type: ClientMessageTypeSchema,
   payload: z.any(),
@@ -21,6 +21,11 @@ export const ClientMessageSchema = z.object({
 export const AuthPayloadSchema = z.object({
   userId: z.string(),
   token: z.string(),
+});
+
+export const SendMessagePayloadSchema = z.object({
+  message: z.string().max(20),
+  roomCode: RoomCodeSchema,
 });
 
 export const CreateGamePayloadSchema = z.object({
