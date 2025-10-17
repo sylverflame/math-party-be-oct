@@ -1,10 +1,9 @@
 import { EventEmitter } from "events";
 import { WebSocket, WebSocketServer } from "ws";
 import { ZodError } from "zod";
-import { GameManager } from "./GameManager";
-import { AuthPayloadSchema, CreateGamePayloadSchema, ClientMessageSchema, JoinLeaveStartPayloadSchema, RoomCode, SolutionPayloadSchema, SendMessagePayloadSchema } from "./Schemas";
-import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 import { Game } from "./Game";
+import { AuthPayloadSchema, ClientMessageSchema, CreateGamePayloadSchema, JoinLeaveStartPayloadSchema, RoomCode, SendMessagePayloadSchema, SolutionPayloadSchema } from "./Schemas";
+import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -35,7 +34,8 @@ export class WebSocketManager {
   };
 
   initializeSocket = (socket: AuthedSocket) => {
-    socket.id = crypto.randomUUID();
+    // TODO: Find a fix for cryto package - EC2 instance is unable to parse this
+    // socket.id = crypto.randomUUID();
     socket.isAuthenticated = false;
     this.sendMessageToSocket(OutgoingMessageTypes.MESSAGE, { message: "Authenticate Yourself" }, socket);
     socket.once("message", (data: any) => this.handleAuthentication(socket, data));
