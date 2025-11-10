@@ -2,7 +2,16 @@ import { EventEmitter } from "events";
 import { WebSocket, WebSocketServer } from "ws";
 import { ZodError } from "zod";
 import { Game } from "./Game";
-import { AuthPayloadSchema, ClientMessageSchema, CreateGamePayloadSchema, JoinLeaveStartPayloadSchema, RoomCode, SendMessagePayloadSchema, SolutionPayloadSchema } from "./Schemas";
+import {
+  AuthPayloadSchema,
+  ClientMessageSchema,
+  CreateGamePayloadSchema,
+  JoinLeaveStartPenaltyPayloadSchema,
+  RestartGamePayloadSchema,
+  RoomCode,
+  SendMessagePayloadSchema,
+  SolutionPayloadSchema,
+} from "./Schemas";
 import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 
 export interface AuthedSocket extends WebSocket {
@@ -115,23 +124,32 @@ export class WebSocketManager {
           if (socket.isPlayingGame || socket.isHostingGame) {
             throw new Error("Player is already in a game");
           }
-          const { roomCode } = JoinLeaveStartPayloadSchema.parse(payload);
+          const { roomCode } = JoinLeaveStartPenaltyPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.JOIN_ROOM, userId, roomCode);
         }
 
         if (type === SocketManagerEvents.LEAVE_ROOM) {
-          const { roomCode } = JoinLeaveStartPayloadSchema.parse(payload);
+          const { roomCode } = JoinLeaveStartPenaltyPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.LEAVE_ROOM, userId, roomCode);
         }
 
         if (type === SocketManagerEvents.START_GAME) {
-          const { roomCode } = JoinLeaveStartPayloadSchema.parse(payload);
+          const { roomCode } = JoinLeaveStartPenaltyPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.START_GAME, userId, roomCode);
         }
 
         if (type === SocketManagerEvents.SOLUTION_SUBMIT) {
           const { roomCode, round, score } = SolutionPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.SOLUTION_SUBMIT, userId, roomCode, round, score);
+        }
+        if (type === SocketManagerEvents.RESTART_GAME) {
+          const { roomCode } = RestartGamePayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.RESTART_GAME, userId, roomCode);
+        }
+
+        if (type === SocketManagerEvents.PENALTY) {
+          const { roomCode } = JoinLeaveStartPenaltyPayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.PENALTY, userId, roomCode);
         }
       } catch (error) {
         this.handleError("onMessage", socket, error);
@@ -228,19 +246,31 @@ export class WebSocketManager {
     const message = `Game started`;
     this.broadcastMessage(GameManagerEvents.GAME_STARTED, { message, gameState, round }, playersInRoom);
   };
-  private onNextRound = (userId: UserID, playersInRoom: UserID[], round: GameRound | null, gameState: Partial<Game>) => {
-    let message;
-    if (!round) {
-      message = "Game finished";
-      this.sendMessageToId(OutgoingMessageTypes.PLAYER_GAME_FINISHED, { message }, userId);
-    } else {
-      this.sendMessageToId(GameManagerEvents.NEXT_ROUND, { round, message }, userId);
-    }
-    this.broadcastMessage(OutgoingMessageTypes.STATE_UPDATED, { gameState }, playersInRoom);
+  private onNextRound = (userId: UserID, round: GameRound | null) => {
+    this.sendMessageToId(GameManagerEvents.NEXT_ROUND, { round }, userId);
+  };
+
+  private onPlayerGameFinished = (userId: UserID) => {
+    let message = "Game Finished";
+    this.sendMessageToId(GameManagerEvents.PLAYER_GAME_FINISHED, { message }, userId);
   };
 
   private onBroadcastMessage = (userId: UserID, playersInRoom: UserID[], message: Partial<Game>) => {
     this.broadcastMessage(OutgoingMessageTypes.CHAT_MESSAGE, { userId, message }, playersInRoom);
+  };
+
+  private onGameRestarted = (playersInRoom: UserID[]) => {
+    const message = "Game Restarted";
+    this.broadcastMessage(GameManagerEvents.GAME_RESTARTED, { message }, playersInRoom);
+  };
+
+  private onGameStateUpdate = (playersInRoom: UserID[], gameState: Partial<Game>) => {
+    this.broadcastMessage(GameManagerEvents.STATE_UPDATED, { gameState }, playersInRoom);
+  };
+
+  private onGameOver = (playersInRoom: UserID[]) => {
+    let message = "Game Over"
+    this.broadcastMessage(GameManagerEvents.GAME_OVER, { message }, playersInRoom);
   };
 
   private addEventListeners = () => {
@@ -249,6 +279,10 @@ export class WebSocketManager {
     this.eventEmitter.on(GameManagerEvents.PLAYER_LEFT, this.onPlayerLeft);
     this.eventEmitter.on(GameManagerEvents.GAME_STARTED, this.onGameStarted);
     this.eventEmitter.on(GameManagerEvents.NEXT_ROUND, this.onNextRound);
+    this.eventEmitter.on(GameManagerEvents.PLAYER_GAME_FINISHED, this.onPlayerGameFinished);
     this.eventEmitter.on(GameManagerEvents.BROADCAST_MESSAGE, this.onBroadcastMessage);
+    this.eventEmitter.on(GameManagerEvents.GAME_RESTARTED, this.onGameRestarted);
+    this.eventEmitter.on(GameManagerEvents.STATE_UPDATED, this.onGameStateUpdate);
+    this.eventEmitter.on(GameManagerEvents.GAME_OVER, this.onGameOver);
   };
 }

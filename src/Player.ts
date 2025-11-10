@@ -1,4 +1,4 @@
-import { MAX_SCORE } from "./config";
+import { MAX_SCORE, WRONG_ANSWER_PENALTY } from "./config";
 import { PlayerRole, PlayerScore, UserID } from "./types";
 
 export class Player {
@@ -6,7 +6,8 @@ export class Player {
   private role: PlayerRole;
   private scores: PlayerScore[];
   private totalScore: number;
-  private currentRound: number = 1;
+  private currentRound: number;
+  private penalties: number;
 
   /**
    *
@@ -15,13 +16,15 @@ export class Player {
     this.userId = userId;
     this.role = role;
     this.scores = [];
-    this.totalScore = 0;
+    this.totalScore = MAX_SCORE;
+    this.currentRound = 1;
+    this.penalties = 0;
   }
 
   updateScore = (round: number, score: number) => {
     this.scores.push({ round, score });
     this.currentRound += 1;
-    this.totalScore = MAX_SCORE - score;
+    this.totalScore -= score;
   };
 
   getCurrentRound = (): number => {
@@ -30,5 +33,18 @@ export class Player {
 
   getUserId = () => {
     return this.userId;
+  };
+
+  resetPlayer = () => {
+    this.scores = [];
+    this.totalScore = 0;
+    this.totalScore = MAX_SCORE;
+    this.penalties = 0;
+    this.currentRound = 1;
+  };
+
+  addPenalty = () => {
+    this.penalties += 1;
+    this.totalScore -= WRONG_ANSWER_PENALTY * this.penalties
   };
 }

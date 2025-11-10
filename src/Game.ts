@@ -52,7 +52,7 @@ export class Game {
     })[0];
   };
 
-  getPlayers = (): UserID[] => {
+  getAllPlayerIDs = (): UserID[] => {
     return this.players.map((player) => {
       return player.getUserId();
     });
@@ -75,16 +75,28 @@ export class Game {
     return this.status;
   };
 
-  getRound = (roundNumber: number): GameRound | null => {
+  getRound = (roundNumber: number, userId?: UserID): GameRound | null => {
     if (roundNumber > this.rounds.length) {
-      return null
+      return null;
     }
     return this.rounds[roundNumber - 1];
   };
 
   playerFinished = (userId: UserID) => {
-    this.playersFinished.push(userId)
-  }
+    this.playersFinished.push(userId);
+  };
+
+  getFinishedPlayers = (): UserID[] => {
+    return this.playersFinished;
+  };
+
+  resetGame = () => {
+    const { totalRounds, difficulty, isMultiplayer } = this.settings;
+    this.players.forEach((player) => player.resetPlayer());
+    this.rounds = this.createRounds(totalRounds, difficulty);
+    this.setStatus(GameStatus.WAITING_TO_START);
+    this.playersFinished = [];
+  };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {
     let rounds: GameRound[] = [];
