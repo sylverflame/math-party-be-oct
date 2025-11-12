@@ -90,7 +90,7 @@ export class GameManager {
 
   private interpolateY = (maxScorePerRound: number, timePerRound_ms: number, elapsedTime_ms: number): number => {
     if (elapsedTime_ms > timePerRound_ms) return 0;
-    return maxScorePerRound + ((elapsedTime_ms - 0) / (timePerRound_ms - 0)) * (0 - maxScorePerRound);
+    return Math.round(maxScorePerRound + ((elapsedTime_ms - 0) / (timePerRound_ms - 0)) * (0 - maxScorePerRound));
   };
 
   private getScore = (game: Game, elapsedTime: number): number => {

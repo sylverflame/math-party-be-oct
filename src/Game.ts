@@ -51,6 +51,15 @@ export class Game {
     this.playersFinished.forEach((player, index) => {
       if (player === userId) this.playersFinished.splice(index, 1);
     });
+    // If the player who lest is the host and other players are present
+    this.updateHost(userId);
+  };
+
+  private updateHost = (currentHost: UserID) => {
+    if (currentHost === this.host && this.players.length) {
+      this.host = this.players[0].getUserId();
+      this.players[0].setRole("Host");
+    }
   };
 
   getPlayer = (userId: UserID): Player => {
