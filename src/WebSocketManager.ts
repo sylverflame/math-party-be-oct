@@ -7,6 +7,7 @@ import {
   ClientMessageSchema,
   CreateGamePayloadSchema,
   JoinLeaveStartPenaltyPayloadSchema,
+  NoAnswerPayloadSchema,
   RestartGamePayloadSchema,
   RoomCode,
   SendMessagePayloadSchema,
@@ -139,8 +140,8 @@ export class WebSocketManager {
         }
 
         if (type === SocketManagerEvents.SOLUTION_SUBMIT) {
-          const { roomCode, round, score } = SolutionPayloadSchema.parse(payload);
-          this.eventEmitter.emit(SocketManagerEvents.SOLUTION_SUBMIT, userId, roomCode, round, score);
+          const { roomCode, round, elapsedTime } = SolutionPayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.SOLUTION_SUBMIT, userId, roomCode, round, elapsedTime);
         }
         if (type === SocketManagerEvents.RESTART_GAME) {
           const { roomCode } = RestartGamePayloadSchema.parse(payload);
@@ -150,6 +151,10 @@ export class WebSocketManager {
         if (type === SocketManagerEvents.PENALTY) {
           const { roomCode } = JoinLeaveStartPenaltyPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.PENALTY, userId, roomCode);
+        }
+        if (type === SocketManagerEvents.NO_ANSWER) {
+          const { roomCode, round } = NoAnswerPayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.NO_ANSWER, userId, roomCode, round);
         }
       } catch (error) {
         this.handleError("onMessage", socket, error);
@@ -269,7 +274,7 @@ export class WebSocketManager {
   };
 
   private onGameOver = (playersInRoom: UserID[]) => {
-    let message = "Game Over"
+    let message = "Game Over";
     this.broadcastMessage(GameManagerEvents.GAME_OVER, { message }, playersInRoom);
   };
 

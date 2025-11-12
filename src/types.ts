@@ -23,7 +23,8 @@ export enum SocketManagerEvents {
   SOLUTION_SUBMIT = "SOLUTION_SUBMIT",
   SEND_CHAT_MESSAGE = "SEND_CHAT_MESSAGE",
   RESTART_GAME = "RESTART_GAME",
-  PENALTY = "PENALTY"
+  PENALTY = "PENALTY",
+  NO_ANSWER = "NO_ANSWER"
 }
 
 export enum GameManagerEvents {

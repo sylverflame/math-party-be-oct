@@ -65,32 +65,47 @@ export class GameManager {
   };
 
   private isGameOver = (game: Game): boolean => {
-    const playersFinished = game.getAllPlayerIDs().filter(player => game.getFinishedPlayers().includes(player))
-    if(playersFinished.length === game.getAllPlayerIDs().length){
+    const playersFinished = game.getAllPlayerIDs().filter((player) => game.getFinishedPlayers().includes(player));
+    if (playersFinished.length === game.getAllPlayerIDs().length) {
       return true;
     }
     return false;
-  }
+  };
 
-  private onSolutionSubmit = (userId: UserID, roomCode: RoomCode, roundNumber: number, score: number) => {
+  private interpolateY = (maxScorePerRound: number, timePerRound_ms: number, elapsedTime_ms: number): number => {
+    if (elapsedTime_ms > timePerRound_ms) return 0;
+    return maxScorePerRound + ((elapsedTime_ms - 0) / (timePerRound_ms - 0)) * (0 - maxScorePerRound);
+  };
+
+  private getScore = (game: Game, elapsedTime: number): number => {
+    const timePerRound = game.timePerRound * 1000;
+    const maxScorePerRound = game.maxScorePerRound;
+    return this.interpolateY(maxScorePerRound, timePerRound, elapsedTime);
+  };
+
+  private onSolutionSubmit = (userId: UserID, roomCode: RoomCode, roundNumber: number, elapsedTime: number) => {
     const game = this.getGame(roomCode);
     if (!game) {
       throw new Error("Game does not exist");
     }
     const player = game.getPlayer(userId);
+    let score = 0;
+    if (elapsedTime == 0 || elapsedTime) {
+      score = this.getScore(game, elapsedTime);
+    }
     player.updateScore(roundNumber, score);
-    const round = game.getRound(roundNumber + 1, userId);
+    const round = game.getRound(roundNumber + 1);
     if (!round) {
-      game.playerFinished(userId)
+      game.playerFinished(userId);
       this.eventEmitter.emit(GameManagerEvents.PLAYER_GAME_FINISHED, userId);
-      if(this.isGameOver(game)){
-        game.setStatus(GameStatus.GAME_OVER)
+      if (this.isGameOver(game)) {
+        game.setStatus(GameStatus.GAME_OVER);
         this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
       }
     } else {
       this.eventEmitter.emit(GameManagerEvents.NEXT_ROUND, userId, round);
     }
-    this.broadcastGameState(roomCode)
+    this.broadcastGameState(roomCode);
   };
 
   private onSendChatMessage = (userId: UserID, roomCode: RoomCode, message: string) => {
@@ -108,7 +123,7 @@ export class GameManager {
     }
     game.resetGame();
     this.eventEmitter.emit(GameManagerEvents.GAME_RESTARTED, game.getAllPlayerIDs());
-    this.broadcastGameState(roomCode)
+    this.broadcastGameState(roomCode);
   };
 
   broadcastGameState = (roomCode: RoomCode) => {
@@ -137,6 +152,7 @@ export class GameManager {
     this.eventEmitter.on(SocketManagerEvents.SEND_CHAT_MESSAGE, this.onSendChatMessage);
     this.eventEmitter.on(SocketManagerEvents.RESTART_GAME, this.onRestartGame);
     this.eventEmitter.on(SocketManagerEvents.PENALTY, this.onPenalty);
+    this.eventEmitter.on(SocketManagerEvents.NO_ANSWER, this.onSolutionSubmit); // No elapsedtime sent across
   };
 
   private addGame = (roomCode: RoomCode, game: Game) => {

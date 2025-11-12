@@ -16,7 +16,7 @@ export class Player {
     this.userId = userId;
     this.role = role;
     this.scores = [];
-    this.totalScore = MAX_SCORE;
+    this.totalScore = 0;
     this.currentRound = 1;
     this.penalties = 0;
   }
@@ -24,7 +24,7 @@ export class Player {
   updateScore = (round: number, score: number) => {
     this.scores.push({ round, score });
     this.currentRound += 1;
-    this.totalScore -= score;
+    this.totalScore += score;
   };
 
   getCurrentRound = (): number => {
@@ -38,13 +38,17 @@ export class Player {
   resetPlayer = () => {
     this.scores = [];
     this.totalScore = 0;
-    this.totalScore = MAX_SCORE;
     this.penalties = 0;
     this.currentRound = 1;
   };
 
   addPenalty = () => {
     this.penalties += 1;
-    this.totalScore -= WRONG_ANSWER_PENALTY * this.penalties
+    if (this.totalScore > 0) {
+      this.totalScore -= WRONG_ANSWER_PENALTY;
+      if (this.totalScore < 0) {
+        this.totalScore = 0;
+      }
+    }
   };
 }

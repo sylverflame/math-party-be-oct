@@ -1,4 +1,4 @@
-import { ALLOW_NEGATIVE_ANSWERS, DIFFICULTY_SETTINGS } from "./config";
+import { ALLOW_NEGATIVE_ANSWERS, DIFFICULTY_SETTINGS, MAX_SCORE } from "./config";
 import { Player } from "./Player";
 import { DifficultyLevel, GameSettings, RoomCode } from "./Schemas";
 import { GameRound, GameStatus, Operator, operators, UserID } from "./types";
@@ -13,6 +13,8 @@ export class Game {
   private players: Player[] = [];
   private rounds: GameRound[] = [];
   private playersFinished: UserID[] = [];
+  public maxScorePerRound: number;
+  public timePerRound: number;
   /**
    *
    */
@@ -21,11 +23,13 @@ export class Game {
     this.roomCode = roomCode;
     this.settings = settings;
     this.host = hostId;
-    const { isMultiplayer, isPrivateGame } = this.settings;
+    const { isMultiplayer, isPrivateGame, totalRounds, timePerRound } = this.settings;
     this.isMultiplayer = isMultiplayer;
     this.isPrivateGame = isPrivateGame;
     this.status = GameStatus.INITIALIZING_GAME;
     this.initializeGame(hostId, settings);
+    this.maxScorePerRound = MAX_SCORE / totalRounds;
+    this.timePerRound = timePerRound;
   }
 
   private initializeGame = (hostId: UserID, gameSettings: GameSettings) => {
@@ -64,6 +68,7 @@ export class Game {
       host: this.host,
       players: this.players,
       status: this.status,
+      timePerRound: this.timePerRound
     };
   };
 
@@ -75,7 +80,7 @@ export class Game {
     return this.status;
   };
 
-  getRound = (roundNumber: number, userId?: UserID): GameRound | null => {
+  getRound = (roundNumber: number): GameRound | null => {
     if (roundNumber > this.rounds.length) {
       return null;
     }
