@@ -239,12 +239,12 @@ export class WebSocketManager {
     const message = `Player joined - ${userId}`;
     this.broadcastMessage(GameManagerEvents.PLAYER_JOINED, { userId, message, gameState }, playersInRoom);
   };
-  private onPlayerLeft = (userId: UserID, playersInRoom: UserID[], gameState: Partial<Game>) => {
+  private onPlayerLeft = (userId: UserID, playersInRoom: UserID[]) => {
     const socket = this.getWebsocket(userId);
     socket!.isHostingGame = undefined;
     socket!.isPlayingGame = undefined;
     const message = `Player Left - ${userId}`;
-    this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId, message, gameState }, playersInRoom);
+    this.broadcastMessage(GameManagerEvents.PLAYER_LEFT, { userId, message }, playersInRoom);
   };
 
   private onGameStarted = (playersInRoom: UserID[], round: GameRound, gameState: Partial<Game>) => {

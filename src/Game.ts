@@ -48,6 +48,9 @@ export class Game {
     this.players.forEach((player, index) => {
       if (player.getUserId() === userId) this.players.splice(index, 1);
     });
+    this.playersFinished.forEach((player, index) => {
+      if (player === userId) this.playersFinished.splice(index, 1);
+    });
   };
 
   getPlayer = (userId: UserID): Player => {
@@ -68,7 +71,7 @@ export class Game {
       host: this.host,
       players: this.players,
       status: this.status,
-      timePerRound: this.timePerRound
+      timePerRound: this.timePerRound,
     };
   };
 

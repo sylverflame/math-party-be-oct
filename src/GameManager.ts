@@ -27,6 +27,10 @@ export class GameManager {
     if (!game) {
       throw new Error("Game does not exist");
     }
+    if (game.getStatus() === GameStatus.GAME_IN_PROGRESS) {
+      game.playerFinished(userId);
+      this.eventEmitter.emit(GameManagerEvents.PLAYER_GAME_FINISHED, userId);
+    }
     // Check if user is already present in the game
     if (game.getAllPlayerIDs().includes(userId)) {
       throw new Error("User already present in the game");
@@ -43,8 +47,15 @@ export class GameManager {
       throw new Error("Game does not exist");
     }
     game.removePlayer(userId);
-    const state = game.getState();
-    this.eventEmitter.emit(GameManagerEvents.PLAYER_LEFT, userId, game.getAllPlayerIDs(), state);
+    this.eventEmitter.emit(GameManagerEvents.PLAYER_LEFT, userId, game.getAllPlayerIDs());
+
+    // To handle case when some players have already finished and other players leave in the middle
+    if (this.isGameOver(game)) {
+      game.setStatus(GameStatus.GAME_OVER);
+      this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
+    }
+    this.broadcastGameState(roomCode);
+    // Delete room if all players leave the room
     if (game.getAllPlayerIDs().length === 0) {
       this.games.delete(roomCode);
     }
