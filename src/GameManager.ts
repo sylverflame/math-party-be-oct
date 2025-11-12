@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
+import { MAX_PLAYERS_PER_ROOM, MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
 import { GameSettings, RoomCode } from "./Schemas";
 import { GameManagerEvents, GameStatus, SocketManagerEvents, UserID } from "./types";
@@ -27,9 +27,8 @@ export class GameManager {
     if (!game) {
       throw new Error("Game does not exist");
     }
-    if (game.getStatus() === GameStatus.GAME_IN_PROGRESS) {
-      game.playerFinished(userId);
-      this.eventEmitter.emit(GameManagerEvents.PLAYER_GAME_FINISHED, userId);
+    if (game.getAllPlayerIDs().length === MAX_PLAYERS_PER_ROOM) {
+      throw new Error("Room is full");
     }
     // Check if user is already present in the game
     if (game.getAllPlayerIDs().includes(userId)) {
@@ -37,6 +36,12 @@ export class GameManager {
     }
     // Add player to game
     game.addPlayer(userId);
+
+    // If game is already in progress
+    if (game.getStatus() === GameStatus.GAME_IN_PROGRESS) {
+      game.playerFinished(userId);
+      this.eventEmitter.emit(GameManagerEvents.PLAYER_GAME_FINISHED, userId);
+    }
     const state = game.getState();
     this.eventEmitter.emit(GameManagerEvents.PLAYER_JOINED, userId, roomCode, game.getAllPlayerIDs(), state);
   };

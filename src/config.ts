@@ -5,6 +5,7 @@ export const TOTAL_ROUNDS: number = 10
 export const MAX_SCORE: number = 300_000
 export const WRONG_ANSWER_PENALTY: number = MAX_SCORE * 0.01
 export const MULTIPLAYER_ROOMCODE_LENGTH = 5
+export const MAX_PLAYERS_PER_ROOM = 5
 export const DIFFICULTY_SETTINGS: GameDifficultyConfig = {
     Easy: {
         id: 1,
