@@ -62,7 +62,7 @@ export class Game {
       this.players[0].setRole("Host");
     }
   };
-
+  // TODO: Update the method to just send across score and userId
   freezeResults = () => {
     this.results = this.players
     .sort((a: Player, b: Player) => b.getTotalScore() - a.getTotalScore())

@@ -19,7 +19,8 @@ const options: ServerOptions = {
   cert: fs.readFileSync(process.env.SSL_CERT!),
 };
 
-const server = https.createServer(options, app);
+// const server = https.createServer(options, app);
+const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const eventEmitter = new EventEmitter();
 export const gameManager = new GameManager(eventEmitter);
