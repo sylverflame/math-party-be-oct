@@ -21,8 +21,8 @@ export class Player {
     this.penalties = 0;
   }
 
-  updateScore = (round: number, score: number) => {
-    this.scores.push({ round, score });
+  updateScore = (round: number, elapsedTime: number, score: number) => {
+    this.scores.push({ round, elapsedTime, score });
     this.currentRound += 1;
     this.totalScore += score;
   };

@@ -96,6 +96,7 @@ export type GameDifficultyConfig = Record<DifficultyLevel, Setting>;
 // Player Entitity types
 export type PlayerScore = {
   round: number;
+  elapsedTime: number;
   score: number;
 };
 

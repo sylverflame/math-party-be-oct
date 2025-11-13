@@ -109,7 +109,7 @@ export class GameManager {
     if (elapsedTime == 0 || elapsedTime) {
       score = this.getScore(game, elapsedTime);
     }
-    player.updateScore(roundNumber, score);
+    player.updateScore(roundNumber, elapsedTime, score);
     const round = game.getRound(roundNumber + 1);
     if (!round) {
       game.playerFinished(userId);
