@@ -105,18 +105,30 @@ export class GameManager {
       throw new Error("Game does not exist");
     }
     const player = game.getPlayer(userId);
+
+    // Calculate the score for the round
     let score = 0;
     if (elapsedTime == 0 || elapsedTime) {
       score = this.getScore(game, elapsedTime);
     }
     player.updateScore(roundNumber, elapsedTime, score);
+
+    // If score is 0 - player did not submit an answer - Hence add a penalty
+    if (score === 0) {
+      player.addPenalty();
+    }
+
+    // Get next round to send across to client
     const round = game.getRound(roundNumber + 1);
+
+    // If round is not fetched - Player finished the game
     if (!round) {
       game.playerFinished(userId);
       this.eventEmitter.emit(GameManagerEvents.PLAYER_GAME_FINISHED, userId);
+      // Check if all players finshed the game
       if (this.isGameOver(game)) {
         game.setStatus(GameStatus.GAME_OVER);
-        game.freezeResults()
+        game.freezeResults();
         this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
       }
     } else {
@@ -169,7 +181,7 @@ export class GameManager {
     this.eventEmitter.on(SocketManagerEvents.SEND_CHAT_MESSAGE, this.onSendChatMessage);
     this.eventEmitter.on(SocketManagerEvents.RESTART_GAME, this.onRestartGame);
     this.eventEmitter.on(SocketManagerEvents.PENALTY, this.onPenalty);
-    this.eventEmitter.on(SocketManagerEvents.NO_ANSWER, this.onSolutionSubmit); // No elapsedtime sent across
+    this.eventEmitter.on(SocketManagerEvents.NO_ANSWER, this.onSolutionSubmit); // No elapsedtime sent across from the socket manager
   };
 
   private addGame = (roomCode: RoomCode, game: Game) => {
