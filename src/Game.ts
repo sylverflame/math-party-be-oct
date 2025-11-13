@@ -15,6 +15,7 @@ export class Game {
   private playersFinished: UserID[] = [];
   public maxScorePerRound: number;
   public timePerRound: number;
+  private results: Player[] = []
   /**
    *
    */
@@ -62,6 +63,12 @@ export class Game {
     }
   };
 
+  freezeResults = () => {
+    this.results = this.players
+    .sort((a: Player, b: Player) => b.getTotalScore() - a.getTotalScore())
+    .slice(0, 2)
+  }
+
   getPlayer = (userId: UserID): Player => {
     return this.players.filter((player) => {
       if (player.getUserId() === userId) return player;
@@ -81,6 +88,7 @@ export class Game {
       players: this.players,
       status: this.status,
       timePerRound: this.timePerRound,
+      results: this.results
     };
   };
 
@@ -113,6 +121,7 @@ export class Game {
     this.rounds = this.createRounds(totalRounds, difficulty);
     this.setStatus(GameStatus.WAITING_TO_START);
     this.playersFinished = [];
+    this.results = [];
   };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {

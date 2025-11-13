@@ -55,4 +55,8 @@ export class Player {
   setRole = (role: PlayerRole) => {
     this.role = role;
   };
+
+  getTotalScore = () => {
+    return this.totalScore
+  }
 }

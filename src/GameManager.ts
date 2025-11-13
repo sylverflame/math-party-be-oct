@@ -116,6 +116,7 @@ export class GameManager {
       this.eventEmitter.emit(GameManagerEvents.PLAYER_GAME_FINISHED, userId);
       if (this.isGameOver(game)) {
         game.setStatus(GameStatus.GAME_OVER);
+        game.freezeResults()
         this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
       }
     } else {
