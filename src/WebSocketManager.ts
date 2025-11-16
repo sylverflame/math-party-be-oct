@@ -33,7 +33,20 @@ export class WebSocketManager {
     this.eventEmitter = eventEmitter;
     this.initializeServer();
     this.addEventListeners();
+    // Clean up unauthenticated sockets at regular interval
+    this.cleanUpSockets(5 * 60 * 1000)
   }
+
+  cleanUpSockets = (interval: number) => {
+    setInterval(() => {
+      console.log("Cleaning up sockets");
+      this.server.clients.forEach((socket) => {
+        if (!(socket as AuthedSocket).isAuthenticated) {
+          socket.close();
+        }
+      });
+    }, interval);
+  };
 
   initializeServer = () => {
     this.server.on("connection", (socket: AuthedSocket) => this.initializeSocket(socket));
