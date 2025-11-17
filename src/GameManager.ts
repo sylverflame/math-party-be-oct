@@ -132,7 +132,11 @@ export class GameManager {
         this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
       }
     } else {
-      this.eventEmitter.emit(GameManagerEvents.NEXT_ROUND, userId, round);
+      // 100ms delay added to fix an issue in client, where countdown timer does not unmount after answer is submitted. Since next round is immediately recieved.
+      let id = setTimeout(() => {
+        this.eventEmitter.emit(GameManagerEvents.NEXT_ROUND, userId, round);
+        clearInterval(id);
+      }, 100);
     }
     this.broadcastGameState(roomCode);
   };
