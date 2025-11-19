@@ -59,7 +59,7 @@ app.get("/api/v1/auth/google/callback", passport.authenticate("google", { sessio
   }
   // return user details
   const { token } = req.user as any;
-  res.redirect(`${process.env.FE_SERVER}\\login?token=${token}`);
+  res.redirect(`${process.env.FE_SERVER}/login?token=${token}`);
 });
 
 app.use("/api/v1", appRouter);
