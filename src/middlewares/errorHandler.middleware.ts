@@ -11,7 +11,7 @@ export const invalidRouteHandler = (req: Request, res: Response) => {
 
 export const globalErrorHandler = (error: any, req: Request, res: Response, next: NextFunction) => {
   if (error instanceof SyntaxError && "body" in error) {
-    res.status(Status.BadRequest).json({ error: ErrorCodes.ERR_001 });
+    res.status(Status.BadRequest).json();
     return;
   }
 

@@ -3,7 +3,7 @@ import express, { json } from "express";
 import http from "http";
 import { WebSocketServer } from "ws";
 import { GameManager } from "./GameManager";
-import { appRouter } from "./routes";
+import { adminRouter } from "./routes";
 import { WebSocketManager } from "./WebSocketManager";
 import fs from "fs";
 import https, { ServerOptions } from "https";
@@ -13,6 +13,7 @@ import { PassportStatic } from "passport";
 import { googleOAuthConfig } from "./config/auth";
 import cors from "cors";
 import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHandler.middleware";
+import { validateAdminToken } from "./middlewares/auth.middleware";
 
 config();
 
@@ -62,7 +63,7 @@ app.get("/api/v1/auth/google/callback", passport.authenticate("google", { sessio
   res.redirect(`${process.env.FE_SERVER}/login?token=${token}`);
 });
 
-app.use("/api/v1", appRouter);
+app.use("/api/v1/admin", validateAdminToken, adminRouter);
 app.use("/api/v1/auth", authRouter);
 
 // For invalid routes and methods

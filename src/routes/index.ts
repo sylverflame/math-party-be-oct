@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { gameManager, socketManager } from "..";
 
-export const appRouter = Router();
+export const adminRouter = Router();
 
-appRouter.get("/socket/:socketId", (req, res) => {
+adminRouter.get("/socket/:socketId", (req, res) => {
   const { socketId } = req.query;
   const { message } = req.query;
   try {
@@ -15,7 +15,7 @@ appRouter.get("/socket/:socketId", (req, res) => {
   }
 });
 
-appRouter.get("/socket", (req, res) => {
+adminRouter.get("/socket", (req, res) => {
   try {
     const totalClients = socketManager.totalClients();
     const authenticatedList = socketManager.listWebSockets();
@@ -29,7 +29,7 @@ appRouter.get("/socket", (req, res) => {
   }
 });
 
-appRouter.get("/broadcast", (req, res) => {
+adminRouter.get("/broadcast", (req, res) => {
   const { authOnly } = req.query;
   try {
     socketManager.broadcastMessageToAllClients(authOnly === "true");
@@ -39,7 +39,7 @@ appRouter.get("/broadcast", (req, res) => {
   }
 });
 
-appRouter.get("/game", (req, res) => {
+adminRouter.get("/game", (req, res) => {
   try {
     const games = gameManager.getRoomCodes();
     res.json(games);
@@ -48,7 +48,7 @@ appRouter.get("/game", (req, res) => {
   }
 });
 
-appRouter.get("/game/:roomCode", (req, res) => {
+adminRouter.get("/game/:roomCode", (req, res) => {
   const { roomCode } = req.params;
   try {
     const game = gameManager.getGame(roomCode);
