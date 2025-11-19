@@ -40,10 +40,10 @@ app.use(
 );
 
 // Create WebSocket server
-const options: ServerOptions = {
-  key: fs.readFileSync(process.env.SSL_KEY!),
-  cert: fs.readFileSync(process.env.SSL_CERT!),
-};
+// const options: ServerOptions = {
+//   key: fs.readFileSync(process.env.SSL_KEY!),
+//   cert: fs.readFileSync(process.env.SSL_CERT!),
+// };
 // const server = https.createServer(options, app);
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });

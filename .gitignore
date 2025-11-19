@@ -1,4 +1,7 @@
 node_modules
+dist
+env
 .env
 selfsigned.crt
 selfsigned.key
+tsconfig.tsbuildinfo
