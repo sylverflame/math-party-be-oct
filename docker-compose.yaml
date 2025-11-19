@@ -1,11 +1,8 @@
-version: "3"
 services:
   cnc-be:
     image: cnc-be
     ports:
       - "8080:8080"
-    environment:
-      - PORT=8080
     volumes:
       - "./env/.env:/app/.env:ro"
   cnc-fe:
