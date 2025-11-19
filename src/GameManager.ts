@@ -111,6 +111,9 @@ export class GameManager {
     if (elapsedTime == 0 || elapsedTime) {
       score = this.getScore(game, elapsedTime);
     }
+    if (!elapsedTime) {
+      elapsedTime = game.timePerRound * 1000;
+    }
     player.updateScore(roundNumber, elapsedTime, score);
 
     // If score is 0 - player did not submit an answer - Hence add a penalty

@@ -6,6 +6,7 @@ export class Player {
   private role: PlayerRole;
   private scores: PlayerScore[];
   private totalScore: number;
+  private elapsedTime: number;
   private currentRound: number;
   private penalties: number;
 
@@ -17,6 +18,7 @@ export class Player {
     this.role = role;
     this.scores = [];
     this.totalScore = 0;
+    this.elapsedTime = 0;
     this.currentRound = 1;
     this.penalties = 0;
   }
@@ -25,6 +27,7 @@ export class Player {
     this.scores.push({ round, elapsedTime, score });
     this.currentRound += 1;
     this.totalScore += score;
+    this.elapsedTime += elapsedTime;
   };
 
   getCurrentRound = (): number => {
@@ -38,6 +41,7 @@ export class Player {
   resetPlayer = () => {
     this.scores = [];
     this.totalScore = 0;
+    this.elapsedTime = 0;
     this.penalties = 0;
     this.currentRound = 1;
   };
@@ -57,6 +61,6 @@ export class Player {
   };
 
   getTotalScore = () => {
-    return this.totalScore
-  }
+    return this.totalScore;
+  };
 }
