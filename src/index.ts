@@ -14,11 +14,13 @@ import { googleOAuthConfig } from "./config/auth";
 import cors from "cors";
 import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHandler.middleware";
 import { validateAdminToken } from "./middlewares/auth.middleware";
+import { drizzle } from 'drizzle-orm/node-postgres';
 
 config();
 
 const app = express();
 const PORT = process.env.PORT || 443;
+const db = drizzle(process.env.DATABASE_URL!);
 
 let passport: PassportStatic;
 
