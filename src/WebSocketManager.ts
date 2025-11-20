@@ -14,6 +14,7 @@ import {
   SolutionPayloadSchema,
 } from "./Schemas";
 import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
+import jwt from "jsonwebtoken";
 
 export interface AuthedSocket extends WebSocket {
   id: string;
@@ -34,7 +35,7 @@ export class WebSocketManager {
     this.initializeServer();
     this.addEventListeners();
     // Clean up unauthenticated sockets at regular interval
-    this.cleanUpSockets(5 * 60 * 1000)
+    this.cleanUpSockets(5 * 60 * 1000);
   }
 
   cleanUpSockets = (interval: number) => {
@@ -186,8 +187,7 @@ export class WebSocketManager {
       if ([...this.connections.keys()].includes(userId)) {
         throw new Error("User already exists");
       }
-      // TODO: Validate token here
-
+      jwt.verify(token, process.env.JWT_SECRET!);
       // --
       // Once validated
       socket.isAuthenticated = true;
