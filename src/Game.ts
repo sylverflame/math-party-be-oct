@@ -15,7 +15,8 @@ export class Game {
   private playersFinished: UserID[] = [];
   public maxScorePerRound: number;
   public timePerRound: number;
-  private results: Player[] = []
+  private results: Player[] = [];
+  private gameCode: string = "";
   /**
    *
    */
@@ -34,10 +35,16 @@ export class Game {
   }
 
   private initializeGame = (hostId: UserID, gameSettings: GameSettings) => {
-    const { totalRounds, difficulty, isMultiplayer } = gameSettings;
+    const { totalRounds, difficulty, timePerRound } = gameSettings;
+    this.gameCode = this.getGameCode();
     const hostPlayer = new Player(hostId, "Host");
     this.players.push(hostPlayer);
     this.rounds = this.createRounds(totalRounds, difficulty);
+  };
+
+  getGameCode = (): string => {
+    const { totalRounds, timePerRound, difficulty } = this.settings;
+    return (totalRounds.toString().substring(0, 1) + timePerRound.toString().substring(0, 1) + difficulty.toString().substring(0, 1)).toUpperCase();
   };
 
   addPlayer = (userId: UserID) => {
@@ -64,10 +71,8 @@ export class Game {
   };
   // TODO: Update the method to just send across score and userId
   freezeResults = () => {
-    this.results = this.players
-    .sort((a: Player, b: Player) => b.getTotalScore() - a.getTotalScore())
-    .slice(0, 2)
-  }
+    this.results = this.players.sort((a: Player, b: Player) => b.getTotalScore() - a.getTotalScore()).slice(0, 2);
+  };
 
   getPlayer = (userId: UserID): Player => {
     return this.players.filter((player) => {
@@ -88,7 +93,7 @@ export class Game {
       players: this.players,
       status: this.status,
       timePerRound: this.timePerRound,
-      results: this.results
+      results: this.results,
     };
   };
 

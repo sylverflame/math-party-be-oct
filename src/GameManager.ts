@@ -3,6 +3,7 @@ import { MAX_PLAYERS_PER_ROOM, MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
 import { GameSettings, RoomCode } from "./Schemas";
 import { GameManagerEvents, GameStatus, SocketManagerEvents, UserID } from "./types";
+import * as scoresService from "./services/scores.service";
 
 export class GameManager {
   private games = new Map<RoomCode, Game>();
@@ -99,7 +100,7 @@ export class GameManager {
     return this.interpolateY(maxScorePerRound, timePerRound, elapsedTime);
   };
 
-  private onSolutionSubmit = (userId: UserID, roomCode: RoomCode, roundNumber: number, elapsedTime: number) => {
+  private onSolutionSubmit = async (userId: UserID, roomCode: RoomCode, roundNumber: number, elapsedTime: number) => {
     const game = this.getGame(roomCode);
     if (!game) {
       throw new Error("Game does not exist");
@@ -133,6 +134,9 @@ export class GameManager {
         game.setStatus(GameStatus.GAME_OVER);
         game.freezeResults();
         this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
+        const { players: playerScores } = game.getState();
+        const gameCode = game.getGameCode();
+        await scoresService.insertScore(playerScores, gameCode);
       }
     } else {
       // 100ms delay added to fix an issue in client, where countdown timer does not unmount after answer is submitted. Since next round is immediately recieved.

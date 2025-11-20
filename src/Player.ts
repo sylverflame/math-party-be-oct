@@ -1,4 +1,5 @@
 import { MAX_SCORE, WRONG_ANSWER_PENALTY } from "./config";
+import { DBScore } from "./db/schema";
 import { PlayerRole, PlayerScore, UserID } from "./types";
 
 export class Player {
@@ -62,5 +63,9 @@ export class Player {
 
   getTotalScore = () => {
     return this.totalScore;
+  };
+
+  getScoresForDB = (): DBScore => {
+    return { total_score: this.totalScore, username: this.userId, total_time: this.elapsedTime, penalties: this.penalties};
   };
 }
