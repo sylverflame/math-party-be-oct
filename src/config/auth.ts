@@ -18,20 +18,26 @@ export const googleOAuthConfig = () => {
         // Executed after hitting the callback endpoint
         try {
           const { sub, name, email } = profile._json;
+          let id: number = 0;
           if (email) {
             // Add user to db if emailid does not exist
-            const [userInDb] = await db.select({ email: usersTable.email_id }).from(usersTable).where(eq(usersTable.email_id, email)).limit(1);
-            if (!userInDb.email) {
-              let newUser: NewUser = {
-                email_id: email,
-              };
-              await db.insert(usersTable).values(newUser);
+            const [existingUser] = await db.select().from(usersTable).where(eq(usersTable.email_id, email)).limit(1);
+            if (!existingUser) {
+              let [createdUser] = await db
+                .insert(usersTable)
+                .values({
+                  email_id: email,
+                })
+                .returning({ id: usersTable.id });
+              id = createdUser.id;
+            } else {
+              id = existingUser.id;
             }
           }
-          const jwtPayload = { sub, name, email };
+          const jwtPayload = { sub, name, email, id };
           const token = jwt.sign(jwtPayload, process.env.JWT_SECRET!, { expiresIn: "1h" });
+          // Has to be passed as a user object - other objects cannot be appended to request here
           const user = {
-            ...profile._json,
             token,
           };
           done(null, user);

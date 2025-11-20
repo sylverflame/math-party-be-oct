@@ -15,9 +15,9 @@ export const validateToken = (req: Request, res: Response, next: NextFunction) =
     if (!token) {
       throw new BadRequestError(ErrorCodes.ERR_001);
     }
-    const { email } = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const { email, id } = jwt.verify(token, process.env.JWT_SECRET!) as any;
     isValidUser = true;
-    req.user = { isValidUser, email, accessToken: token };
+    req.user = { isValidUser, id, email, accessToken: token };
     next();
   } catch (error) {
     next(error);

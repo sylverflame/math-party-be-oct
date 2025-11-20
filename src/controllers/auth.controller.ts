@@ -5,10 +5,10 @@ import jwt from "jsonwebtoken";
 
 export const loginUser = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { isValidUser, email, accessToken } = req.user as any;
-    let userId = email.split("@")[0];
+    const { isValidUser, email, id, accessToken } = req.user as any;
+    let userId = email.split("@")[0]; // Client using username as userId
     let country = "IND";
-    const user = { email, userId, country };
+    const user = { id, userId, country };
     res.status(Status.Success).json({ isValidUser, user, accessToken });
   } catch (error) {
     next(error);
