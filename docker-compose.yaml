@@ -9,3 +9,9 @@ services:
     image: cnc-fe
     ports:
       - "3000:3000"
+  db:
+    image: postgres
+    ports:
+      - "5430:5432"
+    environment:
+      - POSTGRES_PASSWORD=password

@@ -15,6 +15,27 @@
       "when": 1763595855517,
       "tag": "0001_large_mongu",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763597921049,
+      "tag": "0002_groovy_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763600745221,
+      "tag": "0003_nifty_mathemanic",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763600911095,
+      "tag": "0004_dazzling_pixie",
+      "breakpoints": true
     }
   ]
 }
