@@ -6,35 +6,39 @@ import express, { json } from "express";
 import http from "http";
 import { PassportStatic } from "passport";
 import { WebSocketServer } from "ws";
-import { googleOAuthConfig } from "./config/auth";
+import { configurePassport } from "./config/auth";
 import { GameManager } from "./GameManager";
-import { validateAdminToken } from "./middlewares/auth.middleware";
+import authMiddleware from "./middlewares/auth.middleware";
 import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHandler.middleware";
 import { adminRouter } from "./routes";
 import authRouter from "./routes/auth.routes";
+import googleRouter from "./routes/google.routes";
 import { WebSocketManager } from "./WebSocketManager";
 
 config();
 
-const app = express();
 const PORT = process.env.PORT || 443;
-export const db = drizzle(process.env.DATABASE_URL!);
+const DATABASE_URL = process.env.DATABASE_URL!;
+const FE_SERVER = process.env.FE_SERVER!;
 
-let passport: PassportStatic;
+export const db = drizzle(DATABASE_URL);
+export let passportInstance: PassportStatic;
 
 try {
-  passport = googleOAuthConfig();
+  passportInstance = configurePassport();
 } catch (err: any) {
   console.error("Startup error:", err.message);
   process.exit(1); // Exit app if critical env vars are missing
 }
 
+const app = express();
+
 // Middlewares
-app.use(passport.initialize());
+app.use(passportInstance.initialize());
 app.use(json());
 app.use(
   cors({
-    origin: process.env.FE_SERVER!,
+    origin: FE_SERVER,
     methods: ["GET", "POST"],
     credentials: true,
   })
@@ -53,23 +57,12 @@ export const gameManager = new GameManager(eventEmitter);
 export const socketManager = new WebSocketManager(wss, eventEmitter);
 
 // Routes
-app.get("/api/v1/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-app.get("/api/v1/auth/google/callback", passport.authenticate("google", { session: false, failureRedirect: "/" }), (req, res) => {
-  if (!req.user) {
-    res.status(400).json({ error: "Authentication failed" });
-  }
-  // return user details
-  const { token } = req.user as any;
-  res.redirect(`${process.env.FE_SERVER}/login?token=${token}`);
-});
-
-app.use("/api/v1/admin", validateAdminToken, adminRouter);
+app.use("/api/v1/google", googleRouter(passportInstance));
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/admin", authMiddleware.validateAdminToken, adminRouter);
 
-// For invalid routes and methods
+// Error handlers
 app.use(invalidRouteHandler);
-
-// Error Handler
 app.use(globalErrorHandler);
 
 server.listen(PORT, () => {

@@ -16,12 +16,6 @@ const getId = async (email: string): Promise<number> => {
   return id;
 };
 
-const options = {
-  clientID: process.env.GOOGLE_CLIENT_ID!,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: "/api/v1/auth/google/callback",
-};
-
 const verifyCallback = async (accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => {
   // Executed after hitting the callback endpoint
   try {
@@ -42,11 +36,11 @@ const verifyCallback = async (accessToken: string, refreshToken: string, profile
   }
 };
 
-export const googleOAuthConfig = () => {
+export const configurePassport = () => {
   const strategy = new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: "/api/v1/auth/google/callback",
+  callbackURL: "/api/v1/google/callback",
 }, verifyCallback);
   const googlePassport = passport.use(strategy);
   return googlePassport;

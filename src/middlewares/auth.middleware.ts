@@ -1,9 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { PassportStatic } from "passport";
 import { BadRequestError } from "../error-handling/Errors";
 import { ErrorCodes } from "../types";
 
-export const validateToken = (req: Request, res: Response, next: NextFunction) => {
+const onGoogleLoginRequest = (passport: PassportStatic) => {
+  return passport.authenticate("google", { scope: ["profile", "email"] });
+};
+
+const onGoogleLoginCallback = (passport: PassportStatic) => {
+  return passport.authenticate("google", { session: false, failureRedirect: "/" });
+};
+
+const validateToken = (req: Request, res: Response, next: NextFunction) => {
   try {
     let token: string | undefined;
     if (req.url === "/login") {
@@ -24,7 +33,7 @@ export const validateToken = (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export const validateAdminToken = (req: Request, res: Response, next: NextFunction) => {
+const validateAdminToken = (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -36,3 +45,12 @@ export const validateAdminToken = (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
+
+const authMiddleware = {
+  onGoogleLoginRequest,
+  onGoogleLoginCallback,
+  validateToken,
+  validateAdminToken,
+};
+
+export default authMiddleware;
