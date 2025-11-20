@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { BadRequestError } from "../error-handling/Errors";
 import jwt from "jsonwebtoken";
+import { BadRequestError } from "../error-handling/Errors";
 import { ErrorCodes } from "../types";
 
 export const validateToken = (req: Request, res: Response, next: NextFunction) => {

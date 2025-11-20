@@ -1,26 +1,24 @@
+import cors from "cors";
+import { config } from "dotenv";
+import { drizzle } from "drizzle-orm/node-postgres";
 import EventEmitter from "events";
 import express, { json } from "express";
 import http from "http";
-import { WebSocketServer } from "ws";
-import { GameManager } from "./GameManager";
-import { adminRouter } from "./routes";
-import { WebSocketManager } from "./WebSocketManager";
-import fs from "fs";
-import https, { ServerOptions } from "https";
-import { config } from "dotenv";
-import authRouter from "./routes/auth.routes";
 import { PassportStatic } from "passport";
+import { WebSocketServer } from "ws";
 import { googleOAuthConfig } from "./config/auth";
-import cors from "cors";
-import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHandler.middleware";
+import { GameManager } from "./GameManager";
 import { validateAdminToken } from "./middlewares/auth.middleware";
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHandler.middleware";
+import { adminRouter } from "./routes";
+import authRouter from "./routes/auth.routes";
+import { WebSocketManager } from "./WebSocketManager";
 
 config();
 
 const app = express();
 const PORT = process.env.PORT || 443;
-const db = drizzle(process.env.DATABASE_URL!);
+export const db = drizzle(process.env.DATABASE_URL!);
 
 let passport: PassportStatic;
 
