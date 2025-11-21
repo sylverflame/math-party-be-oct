@@ -10,10 +10,13 @@ import { configurePassport } from "./config/auth";
 import { GameManager } from "./GameManager";
 import authMiddleware from "./middlewares/auth.middleware";
 import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHandler.middleware";
+import { ScoresRepository } from "./repository/ScoresRepository";
+import { UsersRepository } from "./repository/UserRepository";
 import { adminRouter } from "./routes";
 import authRouter from "./routes/auth.routes";
 import googleRouter from "./routes/google.routes";
 import { WebSocketManager } from "./WebSocketManager";
+import { ScoresService } from "./services/ScoresService";
 
 config();
 
@@ -50,10 +53,17 @@ app.use(
 //   cert: fs.readFileSync(process.env.SSL_CERT!),
 // };
 // const server = https.createServer(options, app);
+
+// For REST APIs
+export const userRepo = new UsersRepository(db);
+const scoresRepo = new ScoresRepository(db);
+const scoresService = new ScoresService(scoresRepo)
+
+// For Websocket Server
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const eventEmitter = new EventEmitter();
-export const gameManager = new GameManager(eventEmitter);
+export const gameManager = new GameManager(eventEmitter, scoresService);
 export const socketManager = new WebSocketManager(wss, eventEmitter);
 
 // Routes

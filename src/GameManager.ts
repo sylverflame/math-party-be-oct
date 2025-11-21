@@ -1,16 +1,19 @@
 import { EventEmitter } from "events";
 import { MAX_PLAYERS_PER_ROOM, MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
+import { ScoresRepository } from "./repository/ScoresRepository";
 import { GameSettings, RoomCode } from "./Schemas";
 import { GameManagerEvents, GameStatus, SocketManagerEvents, UserID } from "./types";
-import * as scoresService from "./services/scores.service";
+import { ScoresService } from "./services/ScoresService";
 
 export class GameManager {
   private games = new Map<RoomCode, Game>();
   private eventEmitter: EventEmitter;
+  private scoresService: ScoresService
 
-  constructor(eventEmitter: EventEmitter) {
+  constructor(eventEmitter: EventEmitter, scoresService: ScoresService) {
     this.eventEmitter = eventEmitter;
+    this.scoresService = scoresService
     this.addEventListeners();
   }
 
@@ -125,7 +128,7 @@ export class GameManager {
         const { players: playerScores } = game.getState();
         const gameCode = game.getGameCode();
         try {
-          await scoresService.insertScore(playerScores, gameCode);
+          await this.scoresService.insertScores(playerScores, gameCode);
         } catch (error) {
           this.eventEmitter.emit(GameManagerEvents.ERROR, (error as any).message, game.getAllPlayerIDs());
         }

@@ -1,15 +1,15 @@
 import jwt from "jsonwebtoken";
 import passport from "passport";
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from "passport-google-oauth20";
+import { userRepo } from "..";
 import { InternalServerError } from "../error-handling/Errors";
-import { userService } from "../services/user.service";
 
 const getId = async (email: string): Promise<number> => {
   let id: number;
   // Add user to db if emailid does not exist
-  const existingUser = await userService.selectUserWithEmail(email);
+  const existingUser = await userRepo.selectUserWithEmail(email);
   if (!existingUser) {
-    id = await userService.insertUserWithEmail(email);
+    id = await userRepo.insertUserWithEmail(email);
   } else {
     id = existingUser.id;
   }
