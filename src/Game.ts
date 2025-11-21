@@ -7,8 +7,6 @@ export class Game {
   private roomCode: RoomCode;
   private status: GameStatus;
   private settings: GameSettings;
-  private isMultiplayer: boolean = false;
-  private isPrivateGame: boolean = true;
   private host: UserID;
   private players: Player[] = [];
   private rounds: GameRound[] = [];
@@ -25,9 +23,7 @@ export class Game {
     this.roomCode = roomCode;
     this.settings = settings;
     this.host = hostId;
-    const { isMultiplayer, isPrivateGame, totalRounds, timePerRound } = this.settings;
-    this.isMultiplayer = isMultiplayer;
-    this.isPrivateGame = isPrivateGame;
+    const { totalRounds, timePerRound } = this.settings;
     this.status = GameStatus.INITIALIZING_GAME;
     this.initializeGame(hostId, settings);
     this.maxScorePerRound = MAX_SCORE / totalRounds;
@@ -35,7 +31,7 @@ export class Game {
   }
 
   private initializeGame = (hostId: UserID, gameSettings: GameSettings) => {
-    const { totalRounds, difficulty, timePerRound } = gameSettings;
+    const { totalRounds, difficulty } = gameSettings;
     this.gameCode = this.getGameCode();
     const hostPlayer = new Player(hostId, "Host");
     this.players.push(hostPlayer);
