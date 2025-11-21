@@ -25,9 +25,6 @@ export class GameManager {
 
   private onJoinRoom = (userId: UserID, roomCode: RoomCode) => {
     const game = this.getGame(roomCode);
-    if (!game) {
-      throw new Error("Game does not exist");
-    }
     if (game.getAllPlayerIDs().length === MAX_PLAYERS_PER_ROOM) {
       throw new Error("Room is full");
     }
@@ -49,9 +46,6 @@ export class GameManager {
 
   private onPlayerDisconnectOrLeave = (userId: UserID, roomCode: RoomCode) => {
     const game = this.getGame(roomCode);
-    if (!game) {
-      throw new Error("Game does not exist");
-    }
     game.removePlayer(userId);
     this.eventEmitter.emit(GameManagerEvents.PLAYER_LEFT, userId, game.getAllPlayerIDs());
 
@@ -69,9 +63,6 @@ export class GameManager {
 
   private onStartGame = (userId: UserID, roomCode: RoomCode) => {
     const game = this.getGame(roomCode);
-    if (!game) {
-      throw new Error("Game does not exist");
-    }
     if (game.getStatus() === GameStatus.GAME_IN_PROGRESS) {
       throw new Error("Game already started");
     }
@@ -102,9 +93,6 @@ export class GameManager {
 
   private onSolutionSubmit = async (userId: UserID, roomCode: RoomCode, roundNumber: number, elapsedTime: number) => {
     const game = this.getGame(roomCode);
-    if (!game) {
-      throw new Error("Game does not exist");
-    }
     const player = game.getPlayer(userId);
 
     // Calculate the score for the round
@@ -137,7 +125,7 @@ export class GameManager {
         const { players: playerScores } = game.getState();
         const gameCode = game.getGameCode();
         const isScoresSubmitted = await scoresService.insertScore(playerScores, gameCode);
-        if(!isScoresSubmitted){
+        if (!isScoresSubmitted) {
           this.eventEmitter.emit(GameManagerEvents.SCORES_NOT_SUBMITTED, game.getAllPlayerIDs());
         }
       }
@@ -153,17 +141,11 @@ export class GameManager {
 
   private onSendChatMessage = (userId: UserID, roomCode: RoomCode, message: string) => {
     const game = this.getGame(roomCode);
-    if (!game) {
-      throw new Error("Game does not exist");
-    }
     this.eventEmitter.emit(GameManagerEvents.BROADCAST_MESSAGE, userId, game.getAllPlayerIDs(), message);
   };
 
   private onRestartGame = (userId: UserID, roomCode: RoomCode) => {
     const game = this.getGame(roomCode);
-    if (!game) {
-      throw new Error("Game does not exist");
-    }
     game.resetGame();
     this.eventEmitter.emit(GameManagerEvents.GAME_RESTARTED, game.getAllPlayerIDs());
     this.broadcastGameState(roomCode);
@@ -171,9 +153,6 @@ export class GameManager {
 
   broadcastGameState = (roomCode: RoomCode) => {
     const game = this.getGame(roomCode);
-    if (!game) {
-      throw new Error("Game does not exist");
-    }
     const state = game.getState();
     this.eventEmitter.emit(GameManagerEvents.STATE_UPDATED, game.getAllPlayerIDs(), state);
   };
@@ -182,6 +161,13 @@ export class GameManager {
     const game = this.getGame(roomCode);
     const player = game?.getPlayer(userId);
     player?.addPenalty();
+    this.broadcastGameState(roomCode);
+  };
+
+  onUpdateSettings = (roomCode: RoomCode, settings: GameSettings) => {
+    const game = this.getGame(roomCode);
+    game.setSettings(settings);
+    this.eventEmitter.emit(GameManagerEvents.GAME_SETTINGS_UPDATED, game.getAllPlayerIDs());
     this.broadcastGameState(roomCode);
   };
 
@@ -196,6 +182,7 @@ export class GameManager {
     this.eventEmitter.on(SocketManagerEvents.RESTART_GAME, this.onRestartGame);
     this.eventEmitter.on(SocketManagerEvents.PENALTY, this.onPenalty);
     this.eventEmitter.on(SocketManagerEvents.NO_ANSWER, this.onSolutionSubmit); // No elapsedtime sent across from the socket manager
+    this.eventEmitter.on(SocketManagerEvents.UPDATE_GAME_SETTINGS, this.onUpdateSettings); // No elapsedtime sent across from the socket manager
   };
 
   private addGame = (roomCode: RoomCode, game: Game) => {
@@ -206,8 +193,12 @@ export class GameManager {
     return [...this.games.keys()];
   };
 
-  getGame = (roomCode: RoomCode): Game | null => {
-    return this.games.get(roomCode) || null;
+  getGame = (roomCode: RoomCode): Game => {
+    const game = this.games.get(roomCode) || null;
+    if (!game) {
+      throw new Error("Game does not exist");
+    }
+    return game;
   };
 
   private generateRoomCode = (codeLength: number): RoomCode => {

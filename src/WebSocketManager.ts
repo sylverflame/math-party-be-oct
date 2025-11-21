@@ -12,6 +12,7 @@ import {
   RoomCode,
   SendMessagePayloadSchema,
   SolutionPayloadSchema,
+  UpdateGameSettingsPayloadSchema,
 } from "./Schemas";
 import { ErrorCodes, GameManagerEvents, GameRound, OutgoingMessageTypes, SocketManagerEvents, UserID } from "./types";
 import jwt from "jsonwebtoken";
@@ -170,6 +171,10 @@ export class WebSocketManager {
           const { roomCode, round } = NoAnswerPayloadSchema.parse(payload);
           this.eventEmitter.emit(SocketManagerEvents.NO_ANSWER, userId, roomCode, round);
         }
+        if (type === SocketManagerEvents.UPDATE_GAME_SETTINGS) {
+          const { roomCode, settings } = UpdateGameSettingsPayloadSchema.parse(payload);
+          this.eventEmitter.emit(SocketManagerEvents.UPDATE_GAME_SETTINGS, roomCode, settings);
+        }
       } catch (error) {
         this.handleError("onMessage", socket, error);
       }
@@ -291,6 +296,11 @@ export class WebSocketManager {
     this.broadcastMessage(GameManagerEvents.GAME_OVER, { message }, playersInRoom);
   };
 
+  private onGameSettingsUpdated = (playersInRoom: UserID[]) => {
+    let message = "Game Settings Updated";
+    this.broadcastMessage(GameManagerEvents.GAME_SETTINGS_UPDATED, { message }, playersInRoom);
+  };
+
   private addEventListeners = () => {
     this.eventEmitter.on(GameManagerEvents.GAME_CREATED, this.onGameCreated);
     this.eventEmitter.on(GameManagerEvents.PLAYER_JOINED, this.onPlayerJoined);
@@ -302,5 +312,6 @@ export class WebSocketManager {
     this.eventEmitter.on(GameManagerEvents.GAME_RESTARTED, this.onGameRestarted);
     this.eventEmitter.on(GameManagerEvents.STATE_UPDATED, this.onGameStateUpdate);
     this.eventEmitter.on(GameManagerEvents.GAME_OVER, this.onGameOver);
+    this.eventEmitter.on(GameManagerEvents.GAME_SETTINGS_UPDATED, this.onGameSettingsUpdated);
   };
 }

@@ -94,7 +94,7 @@ export class Game {
       status: this.status,
       timePerRound: this.timePerRound,
       results: this.results,
-      settings: this.settings
+      settings: this.settings,
     };
   };
 
@@ -122,12 +122,19 @@ export class Game {
   };
 
   resetGame = () => {
-    const { totalRounds, difficulty, isMultiplayer } = this.settings;
+    const { totalRounds, difficulty, isMultiplayer, timePerRound } = this.settings;
     this.players.forEach((player) => player.resetPlayer());
     this.rounds = this.createRounds(totalRounds, difficulty);
     this.setStatus(GameStatus.WAITING_TO_START);
     this.playersFinished = [];
     this.results = [];
+    this.maxScorePerRound = MAX_SCORE / totalRounds;
+    this.timePerRound = timePerRound;
+  };
+
+  setSettings = (settings: GameSettings) => {
+    this.settings = settings;
+    this.resetGame();
   };
 
   private createRounds = (totalRounds: number, gameDifficulty: DifficultyLevel): GameRound[] => {
