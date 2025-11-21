@@ -27,7 +27,7 @@ export let passportInstance: PassportStatic;
 try {
   passportInstance = configurePassport();
 } catch (err: any) {
-  console.error("Startup error:", err.message);
+  console.error("Startup error -", err.message);
   process.exit(1); // Exit app if critical env vars are missing
 }
 

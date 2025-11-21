@@ -136,7 +136,10 @@ export class GameManager {
         this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
         const { players: playerScores } = game.getState();
         const gameCode = game.getGameCode();
-        await scoresService.insertScore(playerScores, gameCode);
+        const isScoresSubmitted = await scoresService.insertScore(playerScores, gameCode);
+        if(!isScoresSubmitted){
+          this.eventEmitter.emit(GameManagerEvents.SCORES_NOT_SUBMITTED, game.getAllPlayerIDs());
+        }
       }
     } else {
       // 100ms delay added to fix an issue in client, where countdown timer does not unmount after answer is submitted. Since next round is immediately recieved.
