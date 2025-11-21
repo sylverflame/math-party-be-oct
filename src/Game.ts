@@ -94,6 +94,7 @@ export class Game {
       status: this.status,
       timePerRound: this.timePerRound,
       results: this.results,
+      settings: this.settings
     };
   };
 
