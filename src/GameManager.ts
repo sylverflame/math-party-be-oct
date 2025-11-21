@@ -1,10 +1,10 @@
 import { EventEmitter } from "events";
 import { MAX_PLAYERS_PER_ROOM, MULTIPLAYER_ROOMCODE_LENGTH } from "./config";
 import { Game } from "./Game";
-import { ScoresRepository } from "./repository/ScoresRepository";
 import { GameSettings, RoomCode } from "./Schemas";
-import { GameManagerEvents, GameStatus, SocketManagerEvents, UserID } from "./types";
 import { ScoresService } from "./services/ScoresService";
+import { GameManagerEvents, GameStatus, SocketManagerEvents, UserID } from "./types";
+import { BadRequestError } from "./error-handling/Errors";
 
 export class GameManager {
   private games = new Map<RoomCode, Game>();
@@ -200,7 +200,7 @@ export class GameManager {
   getGame = (roomCode: RoomCode): Game => {
     const game = this.games.get(roomCode) || null;
     if (!game) {
-      throw new Error("Game does not exist");
+      throw new BadRequestError("Game does not exist");
     }
     return game;
   };

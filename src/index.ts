@@ -12,11 +12,11 @@ import authMiddleware from "./middlewares/auth.middleware";
 import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHandler.middleware";
 import { ScoresRepository } from "./repository/ScoresRepository";
 import { UsersRepository } from "./repository/UserRepository";
-import { adminRouter } from "./routes";
+import adminRouter from "./routes/admin.routes";
 import authRouter from "./routes/auth.routes";
 import googleRouter from "./routes/google.routes";
-import { WebSocketManager } from "./WebSocketManager";
 import { ScoresService } from "./services/ScoresService";
+import { WebSocketManager } from "./WebSocketManager";
 
 config();
 
@@ -57,7 +57,7 @@ app.use(
 // For REST APIs
 export const userRepo = new UsersRepository(db);
 const scoresRepo = new ScoresRepository(db);
-const scoresService = new ScoresService(scoresRepo)
+const scoresService = new ScoresService(scoresRepo);
 
 // For Websocket Server
 const server = http.createServer(app);
