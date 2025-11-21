@@ -124,9 +124,10 @@ export class GameManager {
         this.eventEmitter.emit(GameManagerEvents.GAME_OVER, game.getAllPlayerIDs());
         const { players: playerScores } = game.getState();
         const gameCode = game.getGameCode();
-        const isScoresSubmitted = await scoresService.insertScore(playerScores, gameCode);
-        if (!isScoresSubmitted) {
-          this.eventEmitter.emit(GameManagerEvents.SCORES_NOT_SUBMITTED, game.getAllPlayerIDs());
+        try {
+          await scoresService.insertScore(playerScores, gameCode);
+        } catch (error) {
+          this.eventEmitter.emit(GameManagerEvents.ERROR, (error as any).message, game.getAllPlayerIDs());
         }
       }
     } else {

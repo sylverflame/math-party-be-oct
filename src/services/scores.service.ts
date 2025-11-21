@@ -1,7 +1,7 @@
 import { Player } from "../Player";
 import { db } from "..";
 import { DBScore, scoresTable } from "../db/schema";
-export const insertScore = async (players: Player[], gameCode: string): Promise<boolean> => {
+export const insertScore = async (players: Player[], gameCode: string) => {
   try {
     // any clean-up
     const parsedScores = players
@@ -15,9 +15,7 @@ export const insertScore = async (players: Player[], gameCode: string): Promise<
       });
     // db call
     await db.insert(scoresTable).values(parsedScores);
-    return true;
   } catch (error) {
-    console.error(error);
-    return false;
+    throw new Error("Error submitting scores")
   }
 };

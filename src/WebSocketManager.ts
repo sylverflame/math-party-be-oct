@@ -301,6 +301,14 @@ export class WebSocketManager {
     this.broadcastMessage(GameManagerEvents.GAME_SETTINGS_UPDATED, { message }, playersInRoom);
   };
 
+  private onError = (message: string, player_s: UserID | UserID[]) => {
+    if (Array.isArray(player_s)) {
+      this.broadcastMessage(GameManagerEvents.ERROR, { message }, player_s);
+    } else {
+      this.sendMessageToId(GameManagerEvents.ERROR, { message }, player_s);
+    }
+  };
+
   private addEventListeners = () => {
     this.eventEmitter.on(GameManagerEvents.GAME_CREATED, this.onGameCreated);
     this.eventEmitter.on(GameManagerEvents.PLAYER_JOINED, this.onPlayerJoined);
@@ -313,5 +321,6 @@ export class WebSocketManager {
     this.eventEmitter.on(GameManagerEvents.STATE_UPDATED, this.onGameStateUpdate);
     this.eventEmitter.on(GameManagerEvents.GAME_OVER, this.onGameOver);
     this.eventEmitter.on(GameManagerEvents.GAME_SETTINGS_UPDATED, this.onGameSettingsUpdated);
+    this.eventEmitter.on(GameManagerEvents.ERROR, this.onError);
   };
 }
