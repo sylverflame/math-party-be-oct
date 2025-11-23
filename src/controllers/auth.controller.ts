@@ -14,10 +14,10 @@ const googleLogin = (req: Request, res: Response) => {
 
 const loginUser = (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { isValidUser, email, id, accessToken } = req.user as any;
+    const { isValidUser, id, email, picture, name, accessToken } = req.user as any;
     let userId = email.split("@")[0]; // Client using username as userId
-    let country = "IND";
-    const user = { id, userId, country };
+    let country = "IN";
+    const user = { id, userId, picture, name, country };
     res.status(Status.Success).json({ isValidUser, user, accessToken });
   } catch (error) {
     next(error);

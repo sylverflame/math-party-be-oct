@@ -24,9 +24,9 @@ const validateToken = (req: Request, res: Response, next: NextFunction) => {
     if (!token) {
       throw new BadRequestError(ErrorCodes.ERR_001);
     }
-    const { email, id } = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const { picture, name, email, id } = jwt.verify(token, process.env.JWT_SECRET!) as any;
     isValidUser = true;
-    req.user = { isValidUser, id, email, accessToken: token };
+    req.user = { isValidUser, id, email, picture, name, accessToken: token };
     next();
   } catch (error) {
     next(error);

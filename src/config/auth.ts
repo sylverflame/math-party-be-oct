@@ -19,12 +19,13 @@ const getId = async (email: string): Promise<number> => {
 const verifyCallback = async (accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => {
   // Executed after hitting the callback endpoint
   try {
-    const { sub, name, email } = profile._json;
+    const { sub, name, email, picture } = profile._json;
+    console.log(profile._json);
     let id: number = 0;
     if (email) {
       id = await getId(email);
     }
-    const jwtPayload = { sub, name, email, id };
+    const jwtPayload = { sub, name, email, id, picture };
     const token = jwt.sign(jwtPayload, process.env.JWT_SECRET!, { expiresIn: "1h" });
     // Has to be passed as a user object - other objects cannot be appended to request here
     const user = {
