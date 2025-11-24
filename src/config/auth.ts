@@ -20,7 +20,6 @@ const verifyCallback = async (accessToken: string, refreshToken: string, profile
   // Executed after hitting the callback endpoint
   try {
     const { sub, name, email, picture } = profile._json;
-    console.log(profile._json);
     let id: number = 0;
     if (email) {
       id = await getId(email);

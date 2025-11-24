@@ -8,7 +8,8 @@ export const usersTable = pgTable("users", {
   created_at: timestamp().defaultNow().notNull(),
 });
 
-export type NewUser = typeof usersTable.$inferInsert;
+export type NewDBUser = typeof usersTable.$inferInsert;
+export type DBUser = typeof usersTable.$inferSelect;
 
 export const gameCodesTable = pgTable("game_codes", {
   id: varchar({ length: 3 }).primaryKey(),
@@ -29,4 +30,5 @@ export const scoresTable = pgTable("scores", {
   penalties: integer(),
 });
 
-export type DBScore = typeof scoresTable.$inferInsert;
+export type NewDBScore = typeof scoresTable.$inferInsert;
+export type DBScore = typeof scoresTable.$inferSelect;
