@@ -1,9 +1,14 @@
 import { Router } from "express";
 import authMiddleware from "../middlewares/auth.middleware";
 import authController from "../controllers/auth.controller";
+import { UserService } from "../services/UserService";
 
-const authRouter = Router();
+const authRouter = (userService: UserService) => {
+  const router = Router();
+  const controller = authController(userService);
+  router.post("/login", authMiddleware.validateToken, controller.loginUser);
+  router.post("/admin-login", controller.loginAdmin);
+  return router;
+};
 
-authRouter.post("/login", authMiddleware.validateToken, authController.loginUser);
-authRouter.post("/admin-login", authController.loginAdmin);
 export default authRouter;

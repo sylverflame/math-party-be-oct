@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { PassportStatic } from "passport";
-import authMiddleware from "../middlewares/auth.middleware";
 import authController from "../controllers/auth.controller";
+import authMiddleware from "../middlewares/auth.middleware";
+import { UserService } from "../services/UserService";
 
-const googleRouter = (passport: PassportStatic) => {
+const googleRouter = (passport: PassportStatic, userService: UserService) => {
   const router = Router();
+  const controller = authController(userService);
   router.get("/", authMiddleware.onGoogleLoginRequest(passport));
-  router.get("/callback", authMiddleware.onGoogleLoginCallback(passport), authController.googleLogin);
+  router.get("/callback", authMiddleware.onGoogleLoginCallback(passport), controller.googleLogin);
   return router;
 };
 

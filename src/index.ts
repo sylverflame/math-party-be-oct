@@ -13,10 +13,11 @@ import { globalErrorHandler, invalidRouteHandler } from "./middlewares/errorHand
 import { ScoresRepository } from "./repository/ScoresRepository";
 import { UsersRepository } from "./repository/UserRepository";
 import adminRouter from "./routes/admin.routes";
-import authRouter from "./routes/auth.routes";
 import googleRouter from "./routes/google.routes";
 import { ScoresService } from "./services/ScoresService";
 import { WebSocketManager } from "./WebSocketManager";
+import { UserService } from "./services/UserService";
+import authRouter from "./routes/auth.routes";
 
 config();
 
@@ -58,6 +59,7 @@ app.use(
 export const userRepo = new UsersRepository(db);
 const scoresRepo = new ScoresRepository(db);
 const scoresService = new ScoresService(scoresRepo);
+const userService = new UserService(userRepo);
 
 // For Websocket Server
 const server = http.createServer(app);
@@ -67,8 +69,8 @@ export const gameManager = new GameManager(eventEmitter, scoresService);
 export const socketManager = new WebSocketManager(wss, eventEmitter);
 
 // Routes
-app.use("/api/v1/google", googleRouter(passportInstance));
-app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/google", googleRouter(passportInstance, userService));
+app.use("/api/v1/auth", authRouter(userService));
 app.use("/api/v1/admin", authMiddleware.validateAdminToken, adminRouter);
 
 // Error handlers
