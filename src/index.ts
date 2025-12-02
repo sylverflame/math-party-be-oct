@@ -18,6 +18,7 @@ import { ScoresService } from "./services/ScoresService";
 import { WebSocketManager } from "./WebSocketManager";
 import { UserService } from "./services/UserService";
 import authRouter from "./routes/auth.routes";
+import userRouter from "./routes/user.routes";
 
 config();
 
@@ -43,7 +44,7 @@ app.use(json());
 app.use(
   cors({
     origin: FE_SERVER,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
 );
@@ -72,6 +73,7 @@ export const socketManager = new WebSocketManager(wss, eventEmitter);
 app.use("/api/v1/google", googleRouter(passportInstance, userService));
 app.use("/api/v1/auth", authRouter(userService));
 app.use("/api/v1/admin", authMiddleware.validateAdminToken, adminRouter);
+app.use("/api/v1/user", userRouter(userService));
 
 // Error handlers
 app.use(invalidRouteHandler);

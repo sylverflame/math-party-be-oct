@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { ErrorCodes, Status } from "../types";
 import { BadRequestError, ForbiddenError, InternalServerError, NotFoundError, UnauthorizedError } from "../error-handling/Errors";
+import { TokenExpiredError } from "jsonwebtoken";
 
 // For invalid routes and methods
 export const invalidRouteHandler = (req: Request, res: Response) => {
@@ -47,7 +48,11 @@ export const globalErrorHandler = (error: any, req: Request, res: Response, next
     res.status(Status.InternalServerError).json({ error: error.message });
     return;
   }
+  if (error instanceof TokenExpiredError) {
+    res.status(Status.Unauthorized).json({ errorCode: "ERR_012", error: ErrorCodes.ERR_012 });
+    return;
+  }
 
-  console.error("Unhandled error:", error.message);
+  console.error("Unhandled error -", error);
   res.status(Status.InternalServerError).json({ error: ErrorCodes.ERR_005 });
 };

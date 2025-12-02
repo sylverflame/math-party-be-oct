@@ -1,3 +1,4 @@
+import { DBUserUpdate, UserUpdateSchema } from "../db/schema";
 import { UsersRepository } from "../repository/UserRepository";
 
 export class UserService {
@@ -21,5 +22,11 @@ export class UserService {
       ...result,
       userId: result.username,
     };
+  };
+
+  updateUser = async (userId: number, data: DBUserUpdate) => {
+    const parsedData = UserUpdateSchema.parse(data);
+    const result = await this.userRepo.updateUser(userId, parsedData);
+    return result;
   };
 }

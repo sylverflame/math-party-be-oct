@@ -1,4 +1,5 @@
 import { date, integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { createUpdateSchema } from "drizzle-zod";
 
 export const usersTable = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -8,8 +9,10 @@ export const usersTable = pgTable("users", {
   created_at: timestamp().defaultNow().notNull(),
 });
 
-export type NewDBUser = typeof usersTable.$inferInsert;
+export type DBUserInsert = typeof usersTable.$inferInsert;
 export type DBUser = typeof usersTable.$inferSelect;
+export type DBUserUpdate = Partial<typeof usersTable.$inferInsert>;
+export const UserUpdateSchema = createUpdateSchema(usersTable)
 
 export const gameCodesTable = pgTable("game_codes", {
   id: varchar({ length: 3 }).primaryKey(),

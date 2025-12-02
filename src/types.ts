@@ -47,6 +47,7 @@ export enum GameManagerEvents {
 export enum Status {
   Success = 200,
   Created = 201,
+  Updated = 204,
   BadRequest = 400,
   Unauthorized = 401,
   Forbidden = 403,
@@ -66,6 +67,7 @@ export enum ErrorCodes {
   ERR_009 = "ERR_009: Invalid query parameters",
   ERR_010 = "ERR_010: No game found",
   ERR_011 = "ERR_011: Missing environment variables",
+  ERR_012 = "ERR_012: Token expired",
 }
 
 // Game Entity types

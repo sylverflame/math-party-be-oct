@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { DBUser, usersTable } from "../db/schema";
+import { DBUser, DBUserUpdate, usersTable } from "../db/schema";
 
 type database = NodePgDatabase<Record<string, never>> & { $client: Pool };
 type InsertId = number;
@@ -39,6 +39,10 @@ export class UsersRepository {
 
   selectUserByEmail = async (email: string): Promise<DBUser> => {
     const result = await this.db.select().from(usersTable).where(eq(usersTable.email_id, email)).limit(1);
+    return result[0];
+  };
+  updateUser = async (userId: number, userData: DBUserUpdate) => {
+    const result = await this.db.update(usersTable).set(userData).where(eq(usersTable.id, userId)).returning();
     return result[0];
   };
 }
